@@ -1,0 +1,274 @@
+Some Mixture Modeing Basics
+Michael Betancourt
+Fall 2020
+A mixture model is specified by a probability density function of the form
+π(y∣θ,λ)=∑k=1Kλk⋅πk(y∣θk),
+where K
+ is the number of component models, πk
+ are the component probability density functions that specify those models, θk
+ are the component-specific parameters, and λk
+ are the component weights.
+
+In the Stan Modeling Language, however, we don’t specify models with probability density functions but rather the logarithm of probability density functions. For mixture models this requires
+logπ(y∣θ,λ)=log(∑k=1Kλk⋅exp(logπk(y∣θk))).
+Operationally we have to exponentiate the component log probability density functions, add the outputs together with the component weights, and then take the log once more. To simplify we can sneak the weights into the exponential as well,
+logπ(y∣θ,λ)=log(∑k=1Kexp(logλk+logπk(y∣θk))).
+
+Now this operation of exponentiating, adding, and then logging can be numerically unstable if we’re not careful -- the exponentials are prone to underflowing to zero or overflowing to the maximum floating point value after which point the log can no longer recover an accurate value. We can maintain reasonably accuracy, however, by factoring out the largest value and avoiding exponentiating it altogether,
+log(∑k=1Kexp(xk))=log(exp(xkmax)⋅∑k=1Kexp(xk−xkmax))=log(exp(xkmax))+log(∑k=1Kexp(xk−xkmax))=xkmax+log(1+∑k≠kmaxexp(xk−xkmax)).
+By construction we never exponentiate a number larger than 1
+ and avoid overflow entirely, while the 1
+ in the logarithm avoids underlow. This numerically stable operation is implemented in the log_sum_exp function in the Stan Modeling Language so we can implement
+logπ(y∣θ,λ)=log(∑k=1Kexp(logλk+logπk(y∣θk)))
+as
+
+simplex[K] lambda;
+vector[K] baseline_lpdfs;
+target += log_sum_exp(log(lambda) + baseline_lpdfs);
+Stan also provides the log_mix function which implements the same functionality for two components but without having to use log weights,
+log_mix(λ,logπ1(y∣θ1),logπ2(y∣θ2))=log(λ⋅exp(logπ1(y∣θ1))+(1−λ)⋅exp(logπ2(y∣θ2))).
+
+Inflation models are mixture models where at least of the component probability density functions concentrates on a single value, "inflating" the probability of seeing that value relative to the other possible values. The exact mathematical form of this model depends on whether the observational space is discrete or continuous.
+
+Let’s start with a discrete observational space, y∈Z
+, and assume that that we're inflating y=0
+. In this case the inflation model is specified by a Dirac probability mass function,
+δ0(y)={1,0,y=0,else.
+
+Assuming that we inflate a single baseline model, πB(y∣θ)
+, the inflated model is specified by the probability mass function
+logπ(y∣θ,λ)=log(λ⋅exp(logδ0(y))+(1−λ)⋅exp(logπB(y∣θ))).
+The implementation challenge is that we can’t just plug this into Stan because when we evaluate it on a non-zero observation the Dirac probability mass function will introduce an infinity,
+logδ0(y=1)=log(0)=−∞.
+This ill-defined intermediate expression would then propagate through the code resulting in an ill-defined output. Fortunately we can avoid this by thinking about each case separately.
+
+If y=0
+ then the observation could come from either the zero-inflated component or the baseline component,
+π(y=0∣θ,λ)=λ⋅δ0(y=0)+(1−λ)⋅πB(y=0∣θ)=λ⋅1+(1−λ)⋅πB(y=0∣θ)=λ+(1−λ)⋅πB(y=0∣θ),
+or on the log scale,
+logπ(y=0∣θ,λ)=λ⋅exp(log(1))+(1−λ)⋅exp(logπ(y=0∣θ))=λ⋅exp(0)+(1−λ)⋅exp(logπ(y=0∣θ)).
+We can readily implement this in Stan as
+
+real lpdf = baseline_lpdf(0 | theta);
+target += log_mix(lambda, 0, lpdf);
+or
+
+real lpdf = baseline_lpdf(0 | theta);
+target += log_sum_exp(log(lambda), log(1 - lambda) + lpdf).
+On the other hand if y≠0
+ then the only contribution comes from the baseline model down-weighted by (1−λ)
+,
+π(y≠0∣θ,λ)=λ⋅δ0(y≠0)+(1−λ)⋅πB(y≠0∣θ)=λ⋅0+(1−λ)⋅πB(y≠0∣θ)=(1−λ)⋅πB(y≠0∣θ).
+or
+logπ(y≠0∣θ)=log((1−λ)⋅exp(logπB(y≠0∣θ)))=log(1−λ)+logexp(logπB(y≠0∣θ))=log(1−λ)+logπB(y≠0∣θ),
+which we can immediately implement as
+
+real lpdf = baseline_lpdf(0 | theta);
+target += log(1 - lambda) + lpdf;
+We can also put two cases together within a conditional statement,
+
+real lpdf = baseline_lpdf(y[n] | theta);
+if (y[n] == 0) {
+  // Contributions from both components
+  target += log_sum_exp(log(lambda) + 0, log(1 - lambda) + lpdf);
+} else {
+  // Contribution from only the baseline component
+  target += log(1 - lambda) + lpdf
+}
+or, using the log_mix function,
+
+real lpdf = baseline_lpdf(y[n] | theta);
+if (y[n] == 0) {
+  // Contributions from both components
+  target += log_mix(lambda, 0, lpdf);
+} else {
+  // Contribution from only the baseline component
+  target += log(1 - lambda) + lpdf;
+}
+Things get a little wonky when trying to inflate a value in a continuous observational space, y∈R
+. The probably distribution concentrating entirely at y=0
+ is specified by a Dirac probability density function,
+δ(y)={∞,0,y=0,else
+that satisfies
+Pδ[y=0]=limϵ→0∫+ϵ−ϵdy′δ(y′)=1.
+The infinite output at y=0
+ prevents the mixture probability density function from being well-defined there.
+
+In order to well-pose this kind of inflation model, also known as a hurdle model, we have to split out the inflated point from the rest of the points.
+
+As in the discrete case the inflation component doesn't contribute away from y=0
+, in which case we can work with directly probability density functions,
+π(y≠0∣θ,λ)=λ⋅δ(y≠0)+(1−λ)⋅πB(y≠0∣θ)=λ⋅0+(1−λ)⋅πB(y≠0∣θ)=(1−λ)⋅πB(y≠0∣θ).
+
+At y=0
+, however, we have to work with probabilities. We know that Pδ[y=0]=1
+; moreover for any baseline model specified by a continuous probability density function the probability assigned to any single point vanishes,
+PπB[y]=limϵ→0∫y+ϵy−ϵdy′πB(y∣θ)=0.
+In other words the baseline model contributes negligibly to the inflated value, and any time we observe it we know that only the inflation model was active. Consequently
+P[y=0]=λ⋅Pδ[y=0]+(1−λ)⋅PπB[y]=λ⋅1+(1−λ)⋅0=λ⋅1=λ,
+or
+logP[y=0]=λ=λ⋅exp(0)
+which we can implement in Stan as
+
+target += log(lambda) + 0
+Altogether we can specify both cases in Stan with a conditional once again,
+
+if (y[n] == 0) {
+  // Contributions only from inflated component
+  target += log(lambda);
+} else {
+  // Contribution from only the baseline component
+  real lpdf = baseline_lpdf(y[n] | theta);
+  target += log(1 - lambda) + lpdf;
+}
+Note that in this continuous case the contribution in each branch is determined by only a single component model. This means that we can sum up their contributions separately.
+
+For the first branch we have
+
+for (n in 1:N)
+  if (y[n] == 0) {
+    target += log(lambda);
+  }
+}
+which is equivalent to adding log(λ)
+ for each observation of the inflated value,
+
+target += N_zero * log(lambda);
+For the second branch we have
+
+for (n in 1:N)
+  if (y[n] != 0) {
+     real lpdf = baseline_lpdf(y[n] | theta);
+     target += log(1 - lambda) + lpdf;
+  }
+}
+which we can break up into
+
+for (n in 1:N)
+  if (y[n] != 0) {
+     target += log(1 - lambda);
+  }
+
+  if (y[n] != 0) {
+     real lpdf = baseline_lpdf(y[n] | theta);
+     target += lpdf;
+  }
+}
+or
+
+target += (N - N_zero) * log(1 - lambda);
+
+for (n in 1:N)
+  if (y[n] != 0) {
+     real lpdf = baseline_lpdf(y[n] | theta);
+     target += lpdf;
+  }
+}
+Putting everything back together we get
+
+target += N_zero * log(lambda);
+target += (N - N_zero) * log(1 - lambda);
+
+for (n in 1:N)
+  if (y[n] != 0) {
+     real lpdf = baseline_lpdf(y[n] | theta);
+     target += lpdf;
+  }
+}
+Those first two expressions, however, simplify:
+
+target += N_zero * log(lambda);
+target += (N - N_zero) * log(1 - lambda);
+is equivent to
+
+target += N_zero * log(lambda) + (N - N_zero) * log(1 - lambda);
+which is equivalent to
+
+target += log( lambda^{N_zero} * (1 - lambda)^{(N - N_zero)} );
+or
+
+target += binomial_lpdf(lambda, N, N_zero);
+In other words because the the inflated and non-inflated points are essentially modeled by separate data generating processes the entire model decomposes into a binomial model for the total inflated observations and a baseline model for the non-zero observations.
+
+Because these two models are independent we can fit them independently or jointly, whichever is more convenient. In particular if the inflated counts are just a nuisance then we can ignore them entirely and just fit the non-inflated observations directly without any consideration of the inflation!
+
+For multiple inflations the story is similar. For example consider observations within the unit interval y∈[0,1]
+ modeled with a baseline model specified by a beta probability density function,
+πB(y∣θ)=beta(y∣α,β).
+If we inflate both boundaries, y=0
+ and y=1
+, then the inflation model could be implemented with a loop and conditional statements,
+
+data {
+  int<lower=1> N;
+  real y[N];
+}
+
+parameters {
+  simplex[3] lambda;
+  // lambda[1] = probability y = 0
+  // lambda[2] = probability 0 < y < 1
+  // lambda[3] = probabiltity y = 1
+  real<lower=0> alpha;
+  real<lower=0> beta;
+}
+
+model {
+  lambda ~ dirichlet(rep_vector(1, 3));
+  alpha ~ normal(0, 10);
+  beta ~ normal(0, 10);
+
+  for (n in 1:N) {
+    if (y[n] == 0) {
+      target += log(lambda[1]);
+    } else if (y[n] == 1) {
+      target += log(lambda[3]);
+    } else {
+      target += log(lambda[2]) + beta_lpdf(y[n] | alpha, beta);
+    }
+}
+or with a collapsed multinomial model,
+
+data {
+  int<lower=0> N_zero;   // number of zero counts
+  int<lower=0> N_middle; // number of non zero, non unity counts
+  int<lower=0> N_one;    // number of unity counts
+  real<lower=0, upper=1> y_middle[N_middle];
+}
+
+transformed data {
+  int<lower=0> counts[3] = {N_zero, N_middle, N_ones];
+}
+
+parameters {
+  simplex[3] lambda;
+  // lambda[1] = probability y = 0
+  // lambda[2] = probability 0 < y < 1
+  // lambda[3] = probabiltity y = 1
+  real<lower=0> alpha;
+  real<lower=0> beta;
+}
+
+model {
+  lambda ~ dirichlet(rep_vector(1, 3));
+  alpha ~ normal(0, 10);
+  beta ~ normal(0, 10);
+
+  counts ~ multinomial(lambda);
+
+  for (n in 1:N_middle) {
+      target += beta_lpdf(y_middle[n] | alpha, beta);
+  }
+}
+License
+A repository containing the material used in this case study is available on GitHub.
+
+The code in this case study is copyrighted by Michael Betancourt and licensed under the new BSD (3-clause) license:
+
+https://opensource.org/licenses/BSD-3-Clause
+
+The text and figures in this case study are copyrighted by Michael Betancourt and licensed under the CC BY-NC 4.0 license:
+
+https://creativecommons.org/licenses/by-nc/4.0/
+
+Source: https://betanalpha.github.io/assets/case_studies/mixture_models.html

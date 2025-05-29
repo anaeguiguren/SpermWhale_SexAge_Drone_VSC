@@ -1,0 +1,57 @@
+# Determining sperm whale sex from morphometric measurements
+
+## Summary
+I have a dataset that has the average morphometric measurements (total length and nose to body ratio R.hf)
+of sperm whales. I do not know the age or sex of the individuals. But I know that, at about 6m long, 
+the growth curves that relate total length to nose-to-body-ratio diverge for males and females.
+Specifically, while females (who range from 3.6 -12 m) follow a simple logistic curve in which the
+nose-to-body ratio realizes its asymptote. Conversely, the male nose-to-body ratio continues 
+to increase nearly linearly with size (which ranges from 3.6 to 17 m).
+
+
+## Aims
+1. Estimate the parameters for the male and female curves based on the data
+2. Estimate the posterior probability that each observed individual is a female
+3. Estimate credible intervals for curve parameters and posterior probabilities
+
+## Data methodology
+Implement a Bayesian modelling approach
+
+## Tech context
+- We will use the R program
+- tidyverse packages for data manipulation
+- ggplot2 for data visualization
+
+Keep your scripts short and modular to facilitate debugging. Don't complete all of the steps below in one script. Finish scripts where it makes sense and save intermediate datasets. 
+
+## Steps
+As you go tick of the steps below. 
+
+[ ] Wrangle data
+[ ] Fit regression
+[ ] Plot verification
+[ ] ... 
+
+## Data 
+
+The project has the following directory structure:
+
+```
+SpermWhale_SexAge_Drone_VSC/
+├── readme.Rmd              # Project documentation
+├── Data/                  # Data directory
+│   ├── id.morpho.output.clean.csv   # Cleaned morphometric measurements
+│   └── morpho.output.csv            # Raw morphometric measurements
+└── Scripts/               # R scripts directory
+    ├── functions.R       # Helper functions and utilities
+    └── model_sex_age.R   # Main analysis script for sex and age modeling
+```
+
+### Data Files
+- `Data/morpho.output.csv`: Raw morphometric measurements including total length and nose-to-body ratio (R.hf)
+- `Data/id.morpho.output.clean.csv`: Cleaned and processed version of the morphometric data
+
+### Scripts
+- `Scripts/functions.R`: Contains utility functions used in the analysis
+- `Scripts/model_sex_age.R`: Implements the Bayesian modeling approach for sex determination
+
