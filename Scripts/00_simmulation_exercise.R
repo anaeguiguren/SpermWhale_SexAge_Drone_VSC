@@ -43,7 +43,9 @@ hist(x_M)
 
 
 
-# 2. visualize relationships
+# 2. visualize simmulated data----
+
+
 # visualize points
 ggplot(data.frame(Length = x_F, Ratio = y_F), aes(x = Length, y = Ratio)) +
   geom_point(col = "blue") +
@@ -53,6 +55,10 @@ ggplot(data.frame(Length = x_F, Ratio = y_F), aes(x = Length, y = Ratio)) +
   xlim(3.6, 17.4) +
   ylim(0.15, 0.27) +
   theme_classic()
+
+
+
+
 # 3. Fit a bayesian mixture model for both curves
 # 4. Fit bayesian mixture model with sex being hidden
 # 5. Can the model correctly guess sex of initial data?
