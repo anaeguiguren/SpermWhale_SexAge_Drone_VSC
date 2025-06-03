@@ -11,19 +11,16 @@ f_dat <- read.csv("Data/females_nishiwaki.csv", header = F)
 
 # clean data and add sex column
 m_dat <- m_dat %>%
-  mutate(Length = V1, 
-         Ratio = V2/100, 
+  mutate(Length = V1,
+         Ratio = V2 / 100,
          Sex = "Male") %>%
   select(Length, Ratio, Sex)
 
 f_dat <- f_dat %>%
-  mutate(Length = V1, 
-         Ratio = V2/100, 
+  mutate(Length = V1,
+         Ratio = V2 / 100,
          Sex = "Female") %>%
   select(Length, Ratio, Sex)
-
-# Combine data
-all_dat <- rbind(m_dat, f_dat)
 
 
 
@@ -32,11 +29,10 @@ all_dat <- rbind(m_dat, f_dat)
 # Function to fit logistic curve to females and little whales (under 6 m)
 fit_logistic <- function(data) {
   # Fit nonlinear model
-  model <- nls(Ratio ~ max_R * exp(r * Length) / (1 + exp(r * Length)),
-               data = data,
-               start = list(max_R = 0.2, r = 0.2),
-               control = nls.control(maxiter = 100))
-  return(model)
+  nls(Ratio ~ fmax * exp(fr * Length) / (1 + exp(fr * Length)),
+      data = data,
+      start = list(fmax = 0.5, fr = 0.5),
+      control = nls.control(maxiter = 100))
 }
 
 # Modified function to fit male growth after change point
@@ -45,18 +41,18 @@ fit_male_piecewise <- function(data, early_params, chm = 6) {
   late_data <- filter(data, Length > chm)
 
   # fit base curve based on female parameters
-  base <- early_params["max_R"] * exp(early_params["r"] * chm) /
-    (1 + exp(early_params["r"] * chm))
+  base <- early_params["fmax"] * exp(early_params["fr"] * chm) /
+    (1 + exp(early_params["fr"] * chm))
 
 
   # estimate parameters after change point
 
   late_model <- nls(Ratio ~ base +
-                      max_R_M * (exp(r_M * Length)/ (1 + exp(r_M * Length)) - 
-                                   exp(r_M * chm)/ (1 + exp(r_M * chm))),
+                      mmax * (exp(mr * Length) / (1 + exp(mr * Length)) -
+                                exp(mr * chm) / (1 + exp(mr * chm))),
                     data = late_data,
-                    start = list(max_R_M = 0.3, r_M = 0.2),
-                    control = nls.control(maxiter = 200))
+                    start = list(mmax = 0.5, mr = 0.5),
+                    control = nls.control(maxiter = 2000))
   return(list(early_params = early_params,
               late_params = coef(late_model),
               base = base))
@@ -69,7 +65,7 @@ female_model <- fit_logistic(filter(all_dat, Sex == "Female" | Length <= 6))
 female_params <- coef(female_model)
 
 male_model <- fit_male_piecewise(filter(all_dat, Sex == "Male" & Length > 6),
-                                 early_params = female_paramss)
+                                 early_params = female_params)
 
 
 
@@ -88,21 +84,21 @@ print(male_late_params)
 length_seq <- seq(4, 17, by = 0.1)
 
 # Predict curves
-female_pred <- female_params["max_R"] * exp(female_params["r"] * length_seq) / 
-  (1 + exp(female_params["r"] * length_seq))
+female_pred <- female_params["fmax"] * exp(female_params["fr"] * length_seq) /
+  (1 + exp(female_params["fr"] * length_seq))
 
 male_pred <- ifelse(length_seq <= 6,
-                   # Early growth (same as females)
-                   female_params["max_R"] * exp(female_params["r"] * length_seq) / 
-                   (1 + exp(female_params["r"] * length_seq)),
-                   # Late growth (base + additional growth)
-                   male_model$base + 
-                   male_late_params["max_R_M"] * (
-                     exp(male_late_params["r_M"] * length_seq) / 
-                     (1 + exp(male_late_params["r_M"] * length_seq)) -
-                     exp(male_late_params["r_M"] * 6) / 
-                     (1 + exp(male_late_params["r_M"] * 6))
-                   ))
+                    # Early growth (same as females)
+                    female_params["fmax"] * exp(female_params["fr"] * length_seq) / 
+                      (1 + exp(female_params["fr"] * length_seq)),
+                    # Late growth (base + additional growth)
+                    male_model$base +
+                      male_late_params["mmax"] * (
+                        exp(male_late_params["mr"] * length_seq) /
+                          (1 + exp(male_late_params["mr"] * length_seq)) -
+                          exp(male_late_params["mr"] * 6) / 
+                            (1 + exp(male_late_params["mr"] * 6))
+                      ))
 
 # Create prediction dataframe
 pred_df <- data.frame(
@@ -112,12 +108,17 @@ pred_df <- data.frame(
 )
 
 # Plot
+fem_col <- "darkcyan"
+mal_col <- "darkorange"
+all_dat <- bind_rows(m_dat, f_dat)
+
 ggplot(all_dat, aes(x = Length, y = Ratio, color = Sex)) +
   geom_point(alpha = 0.6) +
   geom_line(data = pred_df, aes(x = Length, y = Ratio, color = Sex)) +
   labs(title = "Nishiwaki 1963 Growth Curves",
        x = "Total Length (m)",
        y = "Nose-to-Body Ratio") +
+  scale_color_manual(values = c("Female" = fem_col, "Male" = mal_col)) +
   theme_classic()
 
 # Save plot
@@ -125,14 +126,14 @@ ggsave("Figures/nishiwaki_fits.png", width = 8, height = 6)
 
 # 4. Calculate asymptotic ratios and growth rates----
 # These will be used as priors in the Bayesian model
-max_ratio_F <- female_params["max_R"]
-max_ratio_M <- male_late_params["max_R_M"]
-growth_rate_F <- female_params["r"]
-growth_rate_M <- male_late_params["r_M"]
+max_ratio_F <- female_params["fmax"]
+max_ratio_M <- male_late_params["mmax"]
+growth_rate_F <- female_params["fr"]
+growth_rate_M <- male_late_params["mr"]
 
 # Save parameters to a file
 params <- data.frame(
-  Parameter = c("max_ratio_F", "max_ratio_M", "growth_rate_F", "growth_rate_M"),
+  Parameter = c("fmax", "mmax", "fr", "mr"),
   Value = c(max_ratio_F, max_ratio_M, growth_rate_F, growth_rate_M)
 )
 

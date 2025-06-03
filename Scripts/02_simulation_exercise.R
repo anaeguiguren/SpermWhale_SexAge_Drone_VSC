@@ -31,8 +31,11 @@ hist(x_F, breaks = 10, main = "Distribution of Female Lengths",
 
 # simmulate Ratios
 
-max_R_F <- params$Value[1] ; print(max_R_F) #maximum ntb ratio
-r_F <- params$Value[3] ; print(r_F) #initial growth rate (same for males and females)
+max_R_F <- params$Value[1]
+print(max_R_F) #maximum ntb ratio
+
+r_F <- params$Value[3]
+print(r_F) #initial growth rate (same for males and females)
 
 y_F <-  max_R_F * exp(r_F * x_F) / (1 + exp(r_F * x_F)) +
   rnorm(n, mean = 0, sd = 0.005)
@@ -91,10 +94,7 @@ Ratio <- base + offset
   return(Ratio)  
 }
 
-
-
-
-
+# Create a sequence of lengths for the female lines
 f_line <- data.frame(
   Length = seq(min.L, max.L.F, by = 0.2) 
 )
@@ -113,13 +113,18 @@ m_line <- m_line %>%
 
 
 # visualize points
+fem_col <- "darkcyan"
+mal_col <- "darkorange"
+
 ggplot(df, aes(x = Length, y = Ratio, colour = Sex)) +
-  geom_point() +
+  geom_point(alpha = 0.6) +
   geom_line(data = f_line, aes(x = Length, y = Ratio),
-            inherit.aes = F, colour = 2) +
+            inherit.aes = FALSE, colour = fem_col, linetype = "dashed") +
   geom_line(data = m_line, aes(x = Length, y = Ratio),
-            inherit.aes = F, colour = 3) +
-  labs(title = "Simulated Growth Curves",
+            inherit.aes = FALSE, colour = mal_col,linetype = "dashed") +
+  scale_color_manual(values = c("F" = fem_col, "M" = mal_col)) +
+  labs(title = "Simulated Growth Curves with Curves with known 
+  parameters from Nishiwaki 1963",
        x = "Total Length (m)",
        y = "Nose-to-Body Ratio") +
   theme_classic()
@@ -128,6 +133,7 @@ ggsave("Figures/Nishiwaki_simmulation_fit.png", width = 8, height = 6)
 
 
 
-# 3. Fit a bayesian mixture model for both curves
+# 3. Estimate Model Parameters using ratio functions
+# 
 # 4. Fit bayesian mixture model with sex being hidden
 # 5. Can the model correctly guess sex of initial data?
