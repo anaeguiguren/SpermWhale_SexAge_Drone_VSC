@@ -64,7 +64,7 @@ optim_sex <- function(data,
     }
   }
   #optimizing parameters
-  fit <- optim(pard0, objfun, method = "Nelder-Mead" )
+  fit <- optim(pard0, objfun, method = "Nelder-Mead")
   params <- fit$par
   ss <- fit$value
   # Print results
