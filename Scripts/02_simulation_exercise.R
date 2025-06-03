@@ -77,23 +77,6 @@ df = data.frame(Length = c(x_F, x_M),
                 Sex = rep(c("F", "M"), each = 30))
 
 
-fem_curve <- function(length, r_F = params$Value[3], max_R_F = params$Value[1]){
-  max_R_F * exp(r_F * length) / (1 + exp(r_F * length))
-}
-
-mal_curve <- function(length, r_F = params$Value[3],
-                      max_R_F = params$Value[1],
-                      r_M = params$Value[4], 
-                      chm = 6, max_R_M = params$Value[2]){
-                base <- max_R_F * exp(r_F  * length) / (1 + exp(r_F * length))
-
-                offset <- (length > chm) * max_R_M * (
-                 exp(r_M * length) / (1 + exp(r_M * length)) -
-    exp(r_M * chm) / (1 + exp(r_M * chm)))
-Ratio <- base + offset
-  return(Ratio)  
-}
-
 # Create a sequence of lengths for the female lines
 f_line <- data.frame(
   Length = seq(min.L, max.L.F, by = 0.2) 
@@ -133,7 +116,5 @@ ggsave("Figures/Nishiwaki_simmulation_fit.png", width = 8, height = 6)
 
 
 
-# 3. Estimate Model Parameters using ratio functions
-# 
-# 4. Fit bayesian mixture model with sex being hidden
-# 5. Can the model correctly guess sex of initial data?
+# 3. Estimate Model Parameters using Least Square Optimization ----
+
