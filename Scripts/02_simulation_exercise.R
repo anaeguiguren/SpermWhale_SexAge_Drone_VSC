@@ -11,29 +11,8 @@ library(rstan)
 set.seed(1991)
 
 # 1. generate ratios (R) for male and females to match Nishiwaki-----
-# get parameter estimates based on original dataframe:
-
-m_dat <- read.csv("Data/males_nishiwaki.csv", header = F)
-f_dat <- read.csv("Data/females_nishiwaki.csv", header = F)
-
-# clean data:
-m_dat<- m_dat %>%
-     mutate(Length = V1, 
-         Ratio = V2/100, 
-         Sex = "Male") %>%
-     select(Length, Ratio, Sex)
-
-
-f_dat<- f_dat %>%
-  mutate(Length = V1, 
-         Ratio = V2/100, 
-         Sex = "Female") %>%
-  select(Length, Ratio, Sex)
-
-
-
-
-
+params <- read.csv("Data/nishiwaki_parameters.csv")
+# parameters:
 
 n <- 30 # number of whales of each sex
 min.L <- 4 # length at birth
@@ -51,8 +30,9 @@ hist(x_F, breaks = 10, main = "Distribution of Female Lengths",
      xlab = "Length (m)")
 
 # simmulate Ratios
-max_R_F <- 0.2 #maximum ntb ratio
-r_F <- 0.2 #initial growth rate (same for males and females)
+
+max_R_F <- params$Value[1] ; print(max_R_F) #maximum ntb ratio
+r_F <- params$Value[3] ; print(r_F) #initial growth rate (same for males and females)
 
 y_F <-  max_R_F * exp(r_F * x_F) / (1 + exp(r_F * x_F)) +
   rnorm(n, mean = 0, sd = 0.005)
@@ -71,8 +51,8 @@ x_M <- runif(n, min = min.L, max = max.L.M)
 hist(x_M)
 
 # simulate male ratios in a piecewise manner
-max_R_M <- 0.25 #maximum ntb ratio
-r_M <- 0.2 # male growth rate post 6 m
+max_R_M <- params$Value[2] #maximum ntb ratio
+r_M <- params$Value[4] # male growth rate post 6 m
 chm <- 6 # size at which growth rate changes
 
 
@@ -94,22 +74,40 @@ df = data.frame(Length = c(x_F, x_M),
                 Sex = rep(c("F", "M"), each = 30))
 
 
-fem_curve <- function(length, r_F = 0.2, max_R_F = 0.2){
+fem_curve <- function(length, r_F = params$Value[3], max_R_F = params$Value[1]){
   max_R_F * exp(r_F * length) / (1 + exp(r_F * length))
 }
 
-mal_curve <- function(length, r_F = 0.2, max_R_F = 0.2){
-  max_R_F * exp(r_F * length) / (1 + exp(r_F * length))
+mal_curve <- function(length, r_F = params$Value[3],
+                      max_R_F = params$Value[1],
+                      r_M = params$Value[4], 
+                      chm = 6, max_R_M = params$Value[2]){
+                base <- max_R_F * exp(r_F  * length) / (1 + exp(r_F * length))
+
+                offset <- (length > chm) * max_R_M * (
+                 exp(r_M * length) / (1 + exp(r_M * length)) -
+    exp(r_M * chm) / (1 + exp(r_M * chm)))
+Ratio <- base + offset
+  return(Ratio)  
 }
+
+
 
 
 
 f_line <- data.frame(
   Length = seq(min.L, max.L.F, by = 0.2) 
-  )
+)
 
 f_line <- f_line %>%
   mutate(Ratio = fem_curve(Length))
+
+m_line <- data.frame(
+  Length = seq(min.L, max.L.M, by = 0.2) 
+)
+
+m_line <- m_line %>%
+  mutate(Ratio = mal_curve(Length))
 
 
 
@@ -117,13 +115,16 @@ f_line <- f_line %>%
 # visualize points
 ggplot(df, aes(x = Length, y = Ratio, colour = Sex)) +
   geom_point() +
-  geom_line(data = f_line, aes(x = Length, y = Ratio), inherit.aes = F) +
-  
+  geom_line(data = f_line, aes(x = Length, y = Ratio),
+            inherit.aes = F, colour = 2) +
+  geom_line(data = m_line, aes(x = Length, y = Ratio),
+            inherit.aes = F, colour = 3) +
   labs(title = "Simulated Growth Curves",
        x = "Total Length (m)",
        y = "Nose-to-Body Ratio") +
   theme_classic()
 
+ggsave("Figures/Nishiwaki_simmulation_fit.png", width = 8, height = 6)
 
 
 

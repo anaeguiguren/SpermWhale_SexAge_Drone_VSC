@@ -26,7 +26,12 @@ Keep your scripts short and modular to facilitate debugging. Don't complete all 
 
 ## Steps
 As you go tick of the steps below. 
-
+[x] Estimate growth parameters based on Nishiwaki 1963 data
+[ ] Simmulation exercise for Bayesian estimation
+[ ] Perform exploratory analysis
+[ ] Clean and preprocess data
+[ ] Fit growth curves to the data
+[ ] Calculate posterior
 [ ] Wrangle data
 [ ] Fit regression
 [ ] Plot verification
