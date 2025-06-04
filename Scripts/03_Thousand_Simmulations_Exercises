@@ -1,0 +1,129 @@
+#Thousand Simulations
+
+#Simulation parameters
+n_sims <- 1000
+n_whales <- 30
+
+#Initialize storage matrices
+# Rows = simulations, Columns = measurements
+param_estimates <- matrix(NA, nrow = n_sims, ncol = 4)
+colnmaes(param_estimates) <- c("fr", "fmax", "mr", "mmax")
+
+performance_metrics <- matrix(NA, nrow = n_sims, ncol)
+colnames(performance_metrics) <- c("accuracy", "true_pos_rate", "true_neg_rate")
+
+#Define length bins 
+length_bins <- seq(4, 17, by = 1)
+n_bins <- length(length_bins) - 1
+
+#Initialize bin-specific performance matrix
+bin_performance <- matrix(NA, nrow = n_sims, ncol = n_bins)
+colnames(bin_performance) <- paste(length_bins[-length(length_bins)],
+                                   length_bins[-1], sep = "-")
+
+#Read in known data:
+params.true <- read.csv("Data/nishiwaki_parameters.csv")
+# parameters:
+
+n <- 30 # number of whales of each sex
+min.L <- 4 # length at birth
+max.L.F <- 11 # max length females
+mean.L.F <- 8 # guestimated mean length of females
+mean.L.M <- 12 # mean male length
+max.L.M <- 17 #Max male length
+
+fmax <- params.true$Value[1]
+fr <- params.true$Value[3]
+mmax <- params.true$Value[2] #maximum ntb ratio
+mr <- params.true$Value[4] # male growth rate post 6 m
+chm <- 6 # size at which growth rate changes
+
+#Loop Through
+for (i in 1:n_sims){
+  #Females:
+  x_F <- rnorm(n, mean = mean.L.F, sd = (max.L.F - mean.L.F) / 3) %>%
+  #Truncate values to be between min and max length
+  pmax(min.L) %>%
+  pmin(max.L.F)
+
+  y_F <-  fmax * exp(fr * x_F) / (1 + exp(fr * x_F)) +
+  rnorm(n, mean = 0, sd = 0.005) #add noise
+
+  #Males
+  x_M <- runif(n, min = min.L, max = max.L.M)
+  
+  base <- fmax * exp(fr * x_M) / (1 + exp(fr * x_M))
+
+  offset <- (x_M > chm) * mmax * (
+  exp(mr * x_M) / (1 + exp(mr * x_M)) -
+    exp(mr * chm) / (1 + exp(mr * chm))
+)
+noise <- rnorm(n, mean = 0, sd = 0.005)
+
+y_M <- base + offset + noise
+
+#Create simulated data frame:
+df <- data.frame(Length = c(x_F, x_M),
+                Ratio = c(y_F, y_M), 
+                Sex = rep(c("F", "M"), each = n_whales),
+                Sex_bin = rep(c(1, 0), each = n_whales)
+                )
+
+ # Fit model
+  fit_result <- tryCatch({
+    optim_sex(data = df_sim, chm = 6, 
+              pard0 = c(fr = 0.5, fmax = 0.5, mr = 0.5, mmax = 0.5),
+              weighted = FALSE)
+  }, error = function(e) NULL)
+  
+  if(!is.null(fit_result)) {
+    # Store parameter estimates
+    param_estimates[i,] <- unname(fit_result$params)
+    
+    # Calculate probabilities
+    df_sim$Pr_female <- f_probs(params = fit_result$params, data = df_sim)
+    
+    # Calculate performance metrics
+    perf <- model_perf(bin_sex = df_sim$Sex_bin, fem_probs = df_sim$Pr_female)
+    performance_metrics[i,] <- c(
+      mean(c(perf$true.pos, perf$true.neg)),  # accuracy
+      perf$true.pos,                          # true positive rate
+      perf$true.neg                           # true negative rate
+    )
+  }
+  
+  # Progress indicator
+  if(i %% 100 == 0) cat("Completed", i, "simulations\n")
+}
+
+# Save results
+results <- list(
+  parameters = as.data.frame(param_estimates),
+  performance = as.data.frame(performance_metrics),
+  true_params = c(fr = fr, fmax = fmax, mr = mr, mmax = mmax)
+)
+saveRDS(results, "Results/simulation_results.rds")
+
+ 
+# Create summary plots
+library(ggplot2)
+library(tidyr)
+
+# Parameter distributions
+param_long <- as.data.frame(param_estimates) %>%
+  pivot_longer(cols = everything(), 
+               names_to = "parameter", 
+               values_to = "estimate")
+
+ggplot(param_long, aes(x = estimate)) +
+  geom_histogram(bins = 30) +
+  geom_vline(data = data.frame(
+    parameter = names(results$true_params),
+    true_value = unname(results$true_params)
+  ), aes(xintercept = true_value), color = "red") +
+  facet_wrap(~parameter, scales = "free") +
+  theme_classic() +
+  labs(title = "Distribution of Parameter Estimates",
+       subtitle = "Red lines show true values")
+
+ggsave("Figures/parameter_distributions.png", width = 10, height = 8)
