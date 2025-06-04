@@ -26,16 +26,15 @@ Keep your scripts short and modular to facilitate debugging. Don't complete all 
 
 ## Steps
 As you go tick of the steps below. 
-[x] Estimate growth parameters based on Nishiwaki 1963 data
-[ ] Simmulation exercise for Bayesian estimation
-[ ] Perform exploratory analysis
-[ ] Clean and preprocess data
-[ ] Fit growth curves to the data
-[ ] Calculate posterior
+[x] Estimate parameters based on Nishiwaki
+[x] Simmulate whales for parameter estimation 
+[ ] Test model ability to estimate parameters and sex
 [ ] Wrangle data
-[ ] Fit regression
+[ ] Explore outputs
+[ ] Optimize growth curve parameters
+[ ] Estimate posterior probabilites of being Female
 [ ] Plot verification
-[ ] ... 
+[ ] Run model diagnostics
 
 ## Data 
 
@@ -57,12 +56,6 @@ SpermWhale_SexAge_Drone_VSC/
 - `Data/id.morpho.output.clean.csv`: Cleaned and processed version of the morphometric data
 
 ### Scripts
-- `Scripts/01_Nishiwaki1963_parameters.R`: Estimates growth parameters from Nishiwaki 1963 data
-- `Scripts/02_exploratory_analysis.R`: Initial data exploration and visualization
-- `Scripts/03_data_wrangling.R`: Data cleaning and preprocessing
-- `Scripts/04_growth_curves.R`: Fits growth curves to the data
-- `Scripts/05_posterior_probabilities.R`: Calculates posterior probabilities for sex determination
-- `Scripts/06_verification_plots.R`: Creates verification plots
-- `Scripts/07_model_diagnostics.R`: Performs model diagnostics and validation
 - `Scripts/functions.R`: Contains utility functions used in the analysis
+- `Scripts/model_sex_age.R`: Implements the Bayesian modeling approach for sex determination
 

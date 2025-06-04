@@ -3,85 +3,127 @@
 #0. Load packages ----
 library(tidyverse) # for data manipulation and visualization
 library(stringr) # for string manipulation
+library(ROCR) # estimates true positive and false positive rates 
+library(PresenceAbsence) # builds confusion matrix
 
 #1. Optimizing growth curve parameters ----
 
 #~~~a. Define female and male curve shapes ----
-fem_curve <- function(length, r_F = params$Value[3],
-                      max_R_F = params$Value[1]) {
-  max_R_F * exp(r_F * length) / (1 + exp(r_F * length))
+fem_curve <- function(length, fr, fmax) {
+  fmax * exp(fr * length) / (1 + exp(fr * length))
 }
 
-mal_curve <- function(length, r_F = params$Value[3],
-                      max_R_F = params$Value[1],
-                      r_M = params$Value[4], 
-                      chm = 6, max_R_M = params$Value[2]){
-  base <- max_R_F * exp(r_F  * length) / (1 + exp(r_F * length))
+mal_curve <- function(length, fr, fmax, mr, mmax, chm){
+  base <- fmax * exp(fr  * length) / (1 + exp(fr * length))
 
-  offset <- (length > chm) * max_R_M * 
-    (exp(r_M * length) / (1 + exp(r_M * length)) -
-       exp(r_M * chm) / (1 + exp(r_M * chm)))
+  offset <- (length > chm) * mmax * 
+    (exp(mr * length) / (1 + exp(mr * length)) -
+       exp(mr * chm) / (1 + exp(mr * chm)))
   Ratio <- base + offset
   return(Ratio)
 }
 
 #~~~b. Estimate sum of squares ----
+
 sumsq <- function(params, data, chm, weighted = FALSE){
-  r_F <- params$Value[3]
-  max_R_F <- params$Value[1]
-  r_M <- params$Value[4]
-  max_R_M <- params$Value[2]
-  #estimate predictions based on parameters and data
-  preds_f <- fem_curve(data$Length)
-  preds_m <- mal_curve(data$Length)
-  #calculate residuals
+  fr <- params[1]
+  fmax <- params[2]
+  mr <- params[3]
+  mmax <- params[4]
+  
+  preds_f <- fem_curve(data$Length, fr, fmax)
+  preds_m <- mal_curve(data$Length, fr, fmax, mr, mmax, chm)
+  
   resid_f <- (data$Ratio - preds_f)^2 #female sum of squares
   resid_m <- (data$Ratio - preds_m)^2 # male sum of squares
-  #take the minimum of the two residuals
-  residuals <- pmin(resid_f, resid_m)
+  residuals <- pmin(resid_f, resid_m) #returns the minimum of each curve for each data point
+  
+  
   #when weighted by SD:
-  if (weighted) {
-    ss <- sum(residuals / data$SD_Ratio) #sum of squares divided by sd
+  if(weighted){
+    ss <- sum(residuals/data$SD_Ratio) #sum of squares divided by sd
     return(ss)
-  } else {
+  }else{
     likes <- cbind(resid_f, resid_m)
     ss <- sum(residuals)
     return(list(ss = ss, likes = likes))
   }
 }
 
+
 #~~~c. Fit parameters using optim ----
-optim_sex <- function(data,
-                      pard0 = c(fr = 0.2, fmax = 0.2, mr = 0.2, mmax = 0.2),
-                      chm = 6, weighted = FALSE) {
-  #this is the thing we want to minimize (optimize)
-  objfun <- function(p) {
-    if (weighted) {
+optim_sex <- function(data, chm, pard0, weighted = FALSE){
+  objfun <- function(p){ #this is the thing we want to minimize (optimize)
+    if(weighted) {
       sumsq(p, data, chm, TRUE)
-    } else {
-      #unweighted
+    }else{
       sumsq(p, data, chm, FALSE)$ss
     }
   }
-  #optimizing parameters
-  fit <- optim(pard0, objfun, method = "Nelder-Mead")
+  
+  fit <- optim(pard0, objfun, method = "Nelder-Mead" )
   params <- fit$par
   ss <- fit$value
-  # Print results
+  
   cat(ifelse(weighted, "Weighted SS", "Unweighted SS"), "\n")
   cat(sprintf("Sum of squares: %6.4f\n", ss)) #what are these percentages about?
-  cat(sprintf("Fitted parameters: fr = %5.2f,
-   fmax = %5.2f, mr = %5.2f, mmax = %5.2f\n",
+  cat(sprintf("Fitted parameters: fr = %5.2f, fmax = %5.2f, mr = %5.2f, mmax = %5.2f\n",
               params[1], params[2], params[3], params[4]))
-
-  out <- list(fit = fit, params =  params, ss = ss)
-  return(out)
+  
+  list(params = params, ss = ss, fit = fit)
+  
+  
 }
 
+
+
+
 #~~~d. Estimate posterior probability of being female ----
+
 f_probs <- function(params, data, chm = 6, weighted = FALSE) {
   res <- sumsq(params, data, chm)
   likes <- exp(-res$likes / (2 * res$ss / (nrow(res$likes) - 1)))
   post_probs <- likes[, 1] / rowSums(likes)
   return(post_probs)
+}
+
+#~~~e. compute classification performance -----
+model_perf <- function(bin_sex, fem_probs){
+  # find threshlold that maximizes area under the curve
+  
+  pred <- prediction(predictions = fem_probs, labels = bin_sex)
+  
+  perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+  y <- as.data.frame(perf@y.values)
+  x <- as.data.frame(perf@x.values)
+  
+  fi <- atan(y/x) - pi/4                                         # to calculate the angle between the 45? line and the line joining the origin with the point (x;y) on the ROC curve
+  L  <- sqrt(x^2+y^2)                                            # to calculate the length of the line joining the origin to the point (x;y) on the ROC curve
+  d  <- L*sin(fi) 
+  names(d)<-"vals"
+  d$vals[which(d$vals=="NaN")]<-0
+  maxd<-max(d$vals)
+  maxpos<-which(d$vals==maxd)
+  
+  
+  alpha <-as.data.frame(perf@alpha.values)
+  thresh<-alpha[maxpos,]
+  #cuttoff is 0.89
+  
+  #build confusion matrix 
+  datlength<-length(fem_probs)
+  DATA           <- matrix(0,datlength,3)
+  DATA           <- as.data.frame(DATA)
+  names(DATA)    <-c("plotID", "Observed", "Predicted")
+  DATA$plotID    <-1:datlength[1]
+  DATA$Observed  <- bin_sex
+  DATA$Predicted <- fem_probs
+  conmat<-cmx(DATA, threshold = thresh)#this is the cutoff
+  tp <- conmat[1,1]/ (conmat[1,1]+conmat[2,1]) # proportion of true females identified correctly
+  tn <- conmat[2,2]/(conmat[1,2]+conmat[2,2]) # proportion of true males identified correctly
+  
+  return(list(threshold = thresh, 
+              conmat = conmat, 
+              true.pos = tp, 
+              true.neg = tn))
 }

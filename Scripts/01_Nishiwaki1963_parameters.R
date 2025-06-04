@@ -4,6 +4,7 @@
 
 # Load required packages
 library(tidyverse)
+source("Scripts/functions.R")
 
 # 1. Read and clean data----
 m_dat <- read.csv("Data/males_nishiwaki.csv", header = F)
@@ -113,7 +114,7 @@ mal_col <- "darkorange"
 all_dat <- bind_rows(m_dat, f_dat)
 
 ggplot(all_dat, aes(x = Length, y = Ratio, color = Sex)) +
-  geom_point(alpha = 0.6) +
+  geom_point(alpha = 0.6, size = 3) +
   geom_line(data = pred_df, aes(x = Length, y = Ratio, color = Sex)) +
   labs(title = "Nishiwaki 1963 Growth Curves",
        x = "Total Length (m)",
