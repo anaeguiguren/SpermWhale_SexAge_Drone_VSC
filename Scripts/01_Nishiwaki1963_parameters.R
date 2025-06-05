@@ -24,6 +24,7 @@ f_dat <- f_dat %>%
   select(Length, Ratio, Sex)
 
 
+all_dat <- bind_rows(m_dat, f_dat)
 
 # 2. Fit logistic growth curves----
 
@@ -111,7 +112,6 @@ pred_df <- data.frame(
 # Plot
 fem_col <- "darkcyan"
 mal_col <- "darkorange"
-all_dat <- bind_rows(m_dat, f_dat)
 
 ggplot(all_dat, aes(x = Length, y = Ratio, color = Sex)) +
   geom_point(alpha = 0.6, size = 3) +
