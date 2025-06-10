@@ -97,8 +97,8 @@ model_perf <- function(bin_sex, fem_probs){
   y <- as.data.frame(perf@y.values)
   x <- as.data.frame(perf@x.values)
   
-  fi <- atan(y/x) - pi/4                                         # to calculate the angle between the 45? line and the line joining the origin with the point (x;y) on the ROC curve
-  L  <- sqrt(x^2+y^2)                                            # to calculate the length of the line joining the origin to the point (x;y) on the ROC curve
+  fi <- atan(y/x) - pi/4 # to calculate the angle between the 45? line and the line joining the origin with the point (x;y) on the ROC curve
+  L  <- sqrt(x^2+y^2) # to calculate the length of the line joining the origin to the point (x;y) on the ROC curve
   d  <- L*sin(fi) 
   names(d)<-"vals"
   d$vals[which(d$vals=="NaN")]<-0
@@ -126,4 +126,26 @@ model_perf <- function(bin_sex, fem_probs){
               conmat = conmat, 
               true.pos = tp, 
               true.neg = tn))
+}
+
+
+#~~~f. get classification accuracy accross size bins -----
+perf_bins <- function(data, length_bins = seq(4,17, by =1), threshold) {
+  data$length_bin <- cut(data$Length, breaks = length_bins,
+                         labels = paste(length_bins[-length(length_bins)],
+                         length_bins[-1],
+                         sep = "-"),
+                         include.lowest = TRUE)
+  #assign sex to classes
+  data$Sex_bin_pred <- ifelse(data$Pr_female >= threshold, 1, 0)
+  data$Sex_bin_wrong <- abs(data$Sex_bin - data$Sex_bin_pred)
+
+  #summarize by bin
+
+  bin_summary <- data %>%
+   group_by(length_bin) %>%
+   summarise(sum_wrong = sum(Sex_bin_wrong),
+             prop_right = 1 - sum_wrong/n())
+  
+  return(bin_summary)
 }

@@ -1,5 +1,5 @@
 #Thousand Simulations
-
+source("Scripts/functions.R")
 #Simulation parameters
 n_sims <- 1000
 n_whales <- 30
@@ -9,8 +9,9 @@ n_whales <- 30
 param_estimates <- matrix(NA, nrow = n_sims, ncol = 4)
 colnmaes(param_estimates) <- c("fr", "fmax", "mr", "mmax")
 
-performance_metrics <- matrix(NA, nrow = n_sims, ncol)
-colnames(performance_metrics) <- c("accuracy", "true_pos_rate", "true_neg_rate")
+performance_metrics <- matrix(NA, nrow = n_sims, ncol = 3)
+colnames(performance_metrics) <- c("threshold",
+                                   "true_pos_rate", "true_neg_rate")
 
 #Define length bins 
 length_bins <- seq(4, 17, by = 1)
@@ -63,7 +64,7 @@ noise <- rnorm(n, mean = 0, sd = 0.005)
 y_M <- base + offset + noise
 
 #Create simulated data frame:
-df <- data.frame(Length = c(x_F, x_M),
+df_sim <- data.frame(Length = c(x_F, x_M),
                 Ratio = c(y_F, y_M), 
                 Sex = rep(c("F", "M"), each = n_whales),
                 Sex_bin = rep(c(1, 0), each = n_whales)
@@ -85,12 +86,17 @@ df <- data.frame(Length = c(x_F, x_M),
     
     # Calculate performance metrics
     perf <- model_perf(bin_sex = df_sim$Sex_bin, fem_probs = df_sim$Pr_female)
-    performance_metrics[i,] <- c(
-      mean(c(perf$true.pos, perf$true.neg)),  # accuracy
+    performance_metrics[i, ] <- c(
+      perf$threshold,
       perf$true.pos,                          # true positive rate
       perf$true.neg                           # true negative rate
     )
-  }
+
+    # Get right assignments for binned columns
+    
+    bin_perf <- perf_bins(data = df_sim, threshold = perf$threshold)
+    bin_performance[i, ] <- bin_perf$prop_right
+  } 
   
   # Progress indicator
   if(i %% 100 == 0) cat("Completed", i, "simulations\n")

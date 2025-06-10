@@ -28,7 +28,8 @@ Keep your scripts short and modular to facilitate debugging. Don't complete all 
 As you go tick of the steps below. 
 [x] Estimate parameters based on Nishiwaki
 [x] Simmulate whales for parameter estimation 
-[ ] Test model ability to estimate parameters and sex
+[x] Test model ability to estimate parameters and sex
+[ ] Generate thousands of simulations to get an idea of variation
 [ ] Wrangle data
 [ ] Explore outputs
 [ ] Optimize growth curve parameters
