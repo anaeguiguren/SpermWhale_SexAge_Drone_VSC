@@ -103,12 +103,12 @@ model_perf <- function(bin_sex, fem_probs){
   names(d)<-"vals"
   d$vals[which(d$vals=="NaN")]<-0
   maxd<-max(d$vals)
-  maxpos<-which(d$vals==maxd)
+  maxpos<-max(which(d$vals==maxd))
   
   
   alpha <-as.data.frame(perf@alpha.values)
   thresh<-alpha[maxpos,]
-  #cuttoff is 0.89
+  
   
   #build confusion matrix 
   datlength<-length(fem_probs)

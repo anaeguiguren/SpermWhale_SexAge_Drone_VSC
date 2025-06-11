@@ -1,13 +1,13 @@
 #Thousand Simulations
 source("Scripts/functions.R")
 #Simulation parameters
-n_sims <- 1000
+n_sims <- 10000
 n_whales <- 30
 
 #Initialize storage matrices
 # Rows = simulations, Columns = measurements
 param_estimates <- matrix(NA, nrow = n_sims, ncol = 4)
-colnmaes(param_estimates) <- c("fr", "fmax", "mr", "mmax")
+colnames(param_estimates) <- c("fr", "fmax", "mr", "mmax")
 
 performance_metrics <- matrix(NA, nrow = n_sims, ncol = 3)
 colnames(performance_metrics) <- c("threshold",
@@ -80,7 +80,7 @@ df_sim <- data.frame(Length = c(x_F, x_M),
   if(!is.null(fit_result)) {
     # Store parameter estimates
     param_estimates[i,] <- unname(fit_result$params)
-    
+  }
     # Calculate probabilities
     df_sim$Pr_female <- f_probs(params = fit_result$params, data = df_sim)
     
@@ -95,8 +95,21 @@ df_sim <- data.frame(Length = c(x_F, x_M),
     # Get right assignments for binned columns
     
     bin_perf <- perf_bins(data = df_sim, threshold = perf$threshold)
-    bin_performance[i, ] <- bin_perf$prop_right
-  } 
+
+   # Match bins and assign values
+    bin_names <- colnames(bin_performance)
+    perf_bins_named <- setNames(rep(NA, length(bin_names)), bin_names)
+    
+    # Match bin names with values from bin_perf
+    for(bin in bin_names) {
+        match_idx <- which(bin_perf$length_bin == bin)
+        if(length(match_idx) > 0) {
+            perf_bins_named[bin] <- bin_perf$prop_right[match_idx]
+        }
+    }
+    
+    # Assign to performance matrix
+    bin_performance[i, ] <- perf_bins_named
   
   # Progress indicator
   if(i %% 100 == 0) cat("Completed", i, "simulations\n")
@@ -115,21 +128,34 @@ saveRDS(results, "Results/simulation_results.rds")
 library(ggplot2)
 library(tidyr)
 
-# Parameter distributions
-param_long <- as.data.frame(param_estimates) %>%
+# Summary plots:
+library(ggdist)
+
+#~~~a. Parameter estimates ----
+#reshape data for plotting
+params_long <- results$parameters %>%
   pivot_longer(cols = everything(), 
-               names_to = "parameter", 
-               values_to = "estimate")
+               names_to = "Parameter", 
+               values_to = "Estimate") %>%
+  mutate(Parameter = factor(Parameter, 
+                            levels = c("fr", "fmax", "mr", "mmax")))
 
-ggplot(param_long, aes(x = estimate)) +
-  geom_histogram(bins = 30) +
+
+# make plot for each parameter
+
+
+ggplot(params_long, aes(x = Estimate, y = Parameter)) +
+  stat_halfeye(height = 0.6, normalize = "groups") +
   geom_vline(data = data.frame(
-    parameter = names(results$true_params),
+    Parameter = factor(names(results$true_params), 
+                      levels = c("fr", "fmax", "mr", "mmax")),
     true_value = unname(results$true_params)
-  ), aes(xintercept = true_value), color = "red") +
-  facet_wrap(~parameter, scales = "free") +
-  theme_classic() +
-  labs(title = "Distribution of Parameter Estimates",
-       subtitle = "Red lines show true values")
-
-ggsave("Figures/parameter_distributions.png", width = 10, height = 8)
+  ),
+  aes(xintercept = true_value, y = Parameter),
+  yintercept = 1,
+  height = 0.6,
+  color = "red",
+  linetype = "dashed") +
+  scale_x_continuous() +
+  coord_cartesian(xlim = c(-1, 4)) +
+  theme_minimal()
