@@ -149,3 +149,71 @@ perf_bins <- function(data, length_bins = seq(4,17, by =1), threshold) {
   
   return(bin_summary)
 }
+
+
+#~~~~g. generating data with noise and measurement errors -----
+
+
+generate_repeated_measures <- function(true_ratio, n_measures, sd) {
+  rnorm(n_measures, mean = true_ratio, sd = sd)
+}
+
+# Function to generate one dataset with specified uncertainty
+generate_dataset <- function(uncertainty_sd, true_params) {
+  # Generate lengths
+  x_F <- rnorm(n_whales, mean = mean.L.F, sd = (max.L.F - mean.L.F) / 3) %>%
+    pmin(max.L.F) %>%
+    pmax(min.L)
+  
+  x_M <- runif(n_whales, min = min.L, max = max.L.M)
+  
+  # Generate true ratios with biological variation
+  true_ratio_F <- with(true_params,
+                       fmax * exp(fr * x_F) / (1 + exp(fr * x_F)) + 
+                         rnorm(n_whales, mean = 0, sd = biological_sd)
+  )
+  
+  true_ratio_M <- with(true_params, {
+    base <- fmax * exp(fr * x_M) / (1 + exp(fr * x_M))
+    
+    offset <- (x_M > chm) * mmax * (
+      exp(mr * x_M) / (1 + exp(mr * x_M)) -
+        exp(mr * chm) / (1 + exp(mr * chm))
+    )
+    base + offset + rnorm(n_whales, mean = 0, sd = biological_sd)
+  })
+  
+  # Generate repeated measurements with measurement error
+  measurements_F <- map2_dfr(true_ratio_F, seq_along(true_ratio_F), 
+                             ~data.frame(
+                               ID = paste0("F", .y),
+                               Length = x_F[.y],
+                               true_ratio = .x,
+                               Ratio = generate_repeated_measures(.x, n_measurements, uncertainty_sd),
+                               measure_num = 1:n_measurements,
+                               Sex = "F"
+                             )
+  )
+  
+  measurements_M <- map2_dfr(true_ratio_M, seq_along(true_ratio_M),
+                             ~data.frame(
+                               ID = paste0("M", .y),
+                               Length = x_M[.y],
+                               true_ratio = .x,
+                               Ratio = generate_repeated_measures(.x, n_measurements, uncertainty_sd),
+                               measure_num = 1:n_measurements,
+                               Sex = "M"
+                             )
+  )
+  
+  # Combine and calculate measurement standard deviations
+  dataset <- rbind(measurements_F, measurements_M) %>%
+    group_by(ID) %>%
+    mutate(sd_R = sd(Ratio))%>%
+    ungroup()
+  
+  
+  return(dataset)
+}
+
+
