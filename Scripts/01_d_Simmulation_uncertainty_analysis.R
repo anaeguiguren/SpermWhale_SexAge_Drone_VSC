@@ -15,7 +15,7 @@ source("Scripts/functions.R")
 params.true <- read.csv("Data/nishiwaki_parameters.csv")
 
 # Simulation parameters
-n_sims <- 1000            # simulations per uncertainty level
+n_sims <- 100            # simulations per uncertainty level
 n_whales <- 30           # whales per sex
 n_measurements <- 3      # repeated measurements per whale
 min.L <- 4              # minimum length
@@ -126,9 +126,14 @@ ggplot(final_results, aes(x = uncertainty)) +
 
 
 ggplot(final_results, aes(x = factor(uncertainty), y = accuracy)) +
-  geom_boxplot()
+  geom_boxplot()+
+  geom_hline(yintercept = 0.80, linetype = "dashed", color = "red")+
+  scale_y_continuous(limits = c(0,1))
 
 
 
 ggplot(final_results, aes(x = factor(uncertainty), y = true_pos)) +
-  geom_boxplot()
+  geom_boxplot()+
+  geom_hline(yintercept = 0.90, linetype = "dashed", color = "red")+
+  
+  scale_y_continuous(limits = c(0,1))

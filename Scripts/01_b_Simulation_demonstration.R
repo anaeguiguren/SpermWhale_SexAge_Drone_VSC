@@ -143,8 +143,7 @@ ggplot(df, aes(x = Length, y = Ratio, color = Pr_female)) +
   theme_minimal()
 
 #~~~~c. Find optimal prob cutoff----
-library(ROCR)
-library(PresenceAbsence)
+
 #make binary sex column (F = 1, M = 0)
 
 df <- df %>%
@@ -177,7 +176,7 @@ ggplot(df, aes(x = Length, y = Ratio, colour = as.factor(correct_assign))) +
 df <- df %>%
   mutate(
     bin = cut(Length, breaks = seq(floor(min(Length)), ceiling(max(Length)),
-                                    by = 1), include.lowest = TRUE)
+                                  by = 1), include.lowest = TRUE)
   )
 
 # create bin dataframe:
@@ -186,7 +185,8 @@ bin_summary <- df %>%
   summarise(proportion_correct = mean(correct_assign==0), .groups = "drop")
 
 bin_summary <- bin_summary %>%
-  mutate(bin_mid = as.numeric(gsub("\\((.+),(.+)\\]", "\\1", levels(bin)[bin])) + 0.5)
+  mutate(bin_mid = as.numeric(gsub("\\((.+),(.+)\\]", "\\1",
+  levels(bin)[bin])) + 0.5)
 
 # Plot the result
 ggplot(bin_summary, aes(x = bin_mid, y = proportion_correct)) +

@@ -34,8 +34,8 @@ sumsq <- function(params, data, chm, weighted = FALSE){
   preds_f <- fem_curve(data$Length, fr, fmax)
   preds_m <- mal_curve(data$Length, fr, fmax, mr, mmax, chm)
   
-  resid_f <- (data$Ratio - preds_f)^2 #female sum of squares
-  resid_m <- (data$Ratio - preds_m)^2 # male sum of squares
+  resid_f <- (data$Ratio - preds_f)^2 #female squared residuals
+  resid_m <- (data$Ratio - preds_m)^2 # male squared residuals
   residuals <- pmin(resid_f, resid_m) #returns the minimum of each curve for each data point
   
   
@@ -61,7 +61,7 @@ optim_sex <- function(data, chm, pard0, weighted = FALSE){
     }
   }
   
-  fit <- optim(pard0, objfun, method = "Nelder-Mead" )
+  fit <- optim(pard0, objfun, control= list(maxit = 205000))
   params <- fit$par
   ss <- fit$value
   
