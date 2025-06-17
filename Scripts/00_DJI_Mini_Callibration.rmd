@@ -106,7 +106,7 @@ hist(dat$bal.length, breaks = 20, xlab = "estimated length of Balaena (m)", main
 abline(v = 12.03, col = 2, lwd = 2)
 ```
 
-This means there is an under-estimate of Balaena's length of mean = 0.55 , and s.d. = 0.38
+This means there is an under-estimate of Balaena's length of mean = 0.55 meters, and s.d. = 0.38
 
 ```{r}
 dat$error <- dat$bal.length-12.03
@@ -114,12 +114,23 @@ mean(dat$error)
 sd(dat$error)
 ```
 
-The following section models the error induced by inaccurate altitude measurements based on Burnett et al., 2018.
+
 
 ## Questions
 
+The following section models the error induced by inaccurate altitude measurements based on Burnett et al., 2018.
+
+-   Does error vary depending on the boat's position in the frame?
+
+
 -   Where should the correction factor go - is it a constant that I add to the total, or is it specifically for the altitude?
 
+## Explore the effect of boat position:
+
+```{r}
+ggplot(dat, aes(x = factor(position), y = error))+
+  geom_boxplot()
+```
 ## Altitude experiment:
 
 Here, I will attempt to mitigate and measure of the error comes from bad altitude estimates. So I used our knowledge of Balaena's true length, assumed all other measurements were adequate, and calculated **true altitude**, and found that the good altitudes are further away from the measured altitudes at higher altitudes. For this, I used the formula:
@@ -176,30 +187,99 @@ ggplot(dat, aes(x = altitude.fix, y = true.altitude))+
 Can I model true altitude based on barometric altitude?
 
 ```{r}
-# model random intercept :
+# 
 library(nlme)
 
-# should it be hierarchical?
-m.int <- gls(true.altitude ~ altitude.fix, data = dat, method = "ML")
-summary(m.int) #AIC = 1405.26/ BIC = 1416.77	
-intervals(m.int, level = 0.95)
+# non-hierarchical
+m.nh <- gls(true.altitude ~ altitude.fix,, data = dat, method = "ML")
+summary(m.nh) #AIC = 1405.26/ BIC = 1416.77	
+```
 
-
+```{r}
 # model random intercept :
-m.rand <- lme(true.altitude ~ altitude.fix, data = dat, method = "ML",
+m.rand.int <- lme(true.altitude ~ altitude.fix, data = dat, method = "ML",
               random = ~1|Date)# 
+summary(m.rand.int) # AIC = 1389.933 BIC = 1405.284	- probably yes?
+
+
+intervals(m.rand.int, level = 0.95)
+
+```
+
+
+```{r}
+#model random intercept and slope:
+m.rand <- lme(true.altitude ~ altitude.fix, data = dat, method = "ML",
+              random = ~altitude.fix|Date)# 
 summary(m.rand) # AIC = 1389.933 BIC = 1405.284	- probably yes?
 
 
-intervals(m.rand, level = 0.9)
+```
 
-# add altitude:
-m.rand.alt <- lme(altitude.err ~ true.altitude, data = dat, method = "ML",
-              random = ~1|Date)
-anova(m.rand, m.int)# does help!
-summary(m.rand.alt)# 1182.965	
-intervals(m.rand.alt, level = 0.9)
 
+Compare across models:
+
+```{r}
+dat$fit.nh <- fitted(m.nh) #non-hierarchical
+dat$fit.rand.int <- fitted(m.rand.int) #random intercepts
+dat$fit.rand <- fitted(m.rand) # random slopes
+
+#compare errors from three models
+dat$length.corrected.nh<- morpho.length.alpha(altitude =dat$fit.nh,
+                                      image.width = dat$imageWidth,
+                                      length.pixels = dat$pixel.length)
+
+
+dat$length.corrected.rand.int<- morpho.length.alpha(altitude =dat$fit.rand.int,
+                                      image.width = dat$imageWidth,
+                                      length.pixels = dat$pixel.length)
+
+
+
+dat$length.corrected.rand<- morpho.length.alpha(altitude =dat$fit.rand,
+                                      image.width = dat$imageWidth,
+                                      length.pixels = dat$pixel.length)
+dat$length.corrected.0 <- dat$bal.length
+
+
+
+
+dat_long <- dat %>%
+  pivot_longer(
+    cols = starts_with("length.corrected"), 
+    names_to = "correction_type", 
+    values_to = "corrected_altitude"
+  )%>%
+  mutate(error = corrected_altitude - 12.03, 
+         error_p = 100*(error/12.03))
+
+
+
+
+
+ggplot(dat_long, aes(x = error_p, fill = correction_type)) +
+  stat_halfeye(alpha = 0.5, adjust = 1) +
+  theme_classic() +
+  labs(
+    title = "Density plots of corrected altitudes",
+    x = "Error %",
+    y = "Density",
+    fill = "Correction Type"
+  )+
+  facet_wrap(~correction_type, ncol = 1)+
+  theme(legend.position = "None")+scale_fill_wa_d("rainier")
+
+
+```
+
+```{r}
+dat_long %>%
+  group_by(correction_type)%>%
+  summarise(mean_err = mean(error), 
+            mean_err_p = mean(error_p), 
+            quant_5 = quantile(error_p, probs = 0.025), 
+            quant_95 = quantile(error_p, probs = 0.975),
+            ic_range = quant_95-quant_5)
 ```
 
 How does **percent** error compare to altitude?
@@ -217,7 +297,7 @@ Which looks like error is proportional, more than an added constant
 
 ```{r}
 mean(dat$altitude.err.p)
-quantile(dat$altitude.err.p, probs = c(0.05, 0.95))
+quantile(dat$altitude.err.p, probs = c(0.025, 0.975))
 ```
 
 So if I add the result from the gls non.hierarchical model:
@@ -230,7 +310,7 @@ dat$altitude.corr <-1.40 + dat$altitude.fix*1.017
 dat$bal.length.c<- morpho.length.alpha(altitude =dat$altitude.corr,
                                       image.width = dat$imageWidth,
                                       length.pixels = dat$pixel.length)
-quantile(dat$bal.length.c, probs = c(0.05, 0.5, 0.95))
+quantile(dat$bal.length.c-12.03, probs = c(0.05, 0.5, 0.95))
 
 ```
 
@@ -250,8 +330,6 @@ Look at error pre & post correction:
 dat$length.error.c <- dat$bal.length.c - 12.03 # corrected error raw
 dat$length.error.c.p <- (dat$length.error.c/dat$bal.length.c)*100
 
-dat$length.error.p <- (dat$error/dat$bal.length)*100
-
 e <- c(dat$length.error.c.p,dat$length.error.p)
 d <- data.frame(perc.error = e, error.type = rep(c("corrected", "uncorrected"), each = length(dat$bal.length)))
 
@@ -262,7 +340,7 @@ d <- data.frame(perc.error = e, error.type = rep(c("corrected", "uncorrected"), 
 ggplot(d, aes(x = error.type, y = perc.error, fill = error.type))+
   geom_boxplot()+
   scale_y_continuous(limits=c(-20,20))+
-  labs(y = "corrected % error", x = "error type")+
+  labs(y = "Error %", x = "Error type")+
    theme_classic()+
   theme(legend.position = "null")+
   geom_hline(yintercept = 0)+
@@ -289,7 +367,7 @@ setwd( "C:/Users/balae/Documents/SpermWhale_SexAge_Drone_VSC")
 p1 <-ggplot(d, aes(x = error.type, y = perc.error, fill = error.type))+
   geom_boxplot()+
   scale_y_continuous(limits=c(-20,20))+
-  labs(y = "corrected % error", x = "error type")+
+  labs(y = "Error %", x = "Error type")+
    theme_classic()+
   theme(legend.position = "null")+
   geom_hline(yintercept = 0)+
