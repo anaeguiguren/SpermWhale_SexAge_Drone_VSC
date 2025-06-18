@@ -279,7 +279,8 @@ dat_long %>%
             mean_err_p = mean(error_p), 
             quant_5 = quantile(error_p, probs = 0.025), 
             quant_95 = quantile(error_p, probs = 0.975),
-            ic_range = quant_95-quant_5)
+            ic_range = quant_95-quant_5, 
+            sd = sd(error_p))
 ```
 
 How does **percent** error compare to altitude?
