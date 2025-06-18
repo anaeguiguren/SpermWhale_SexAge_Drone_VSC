@@ -24,7 +24,7 @@ morpho.output <- morpho.output %>% mutate(
 # get correct altitude data from drone srt files 
 morpho.output <- getSrtAltitude(morpho.output)
 
-# get and ration length estimates
+# get and ratio and length estimates
 morpho.output<- morpho.output %>% mutate(
   altitude.c = altitudeASL(altitude.raw = droneAltitude), #add launch height to barometer altitude:
   TL.m = measureWhales(image.width = image_width, altitude = altitudeASL(altitude.raw = droneAltitude),length.pixels = TL.px), #estimate length in meters
@@ -35,8 +35,7 @@ morpho.output<- morpho.output %>% mutate(
   ratio.DF = HF.px/HD.px # ratio nose-flipper to nose DF
 )
 
-# add quality ratings: 
-# get q. ratings
+# get quality ratings
 q.ratings <- read.csv("Data/Processed_Data/morpho.output.QRating.csv", header = T)
 q.ratings <- q.ratings %>% mutate(imageName = file_name)
 
@@ -50,6 +49,18 @@ morpho.output <- morpho.output %>%
 # remove Balaena measurement
 
 morpho.output<- morpho.output[-which(is.na(morpho.output$Q.focus & morpho.output$notes == "balaena")),]
+
+
+# get suckle dives
+
+suckles <- read.csv("Data/morpho.output.nursing.csv", header =T)
+
+suckles <- suckles %>%
+  filter(!is.na(X))
+
+morpho.output$suckled <- suckles$nursed
+morpho.output$suckling <- suckles$nursing
+
 
 
 morpho.output <- morpho.output %>% filter(notes != "balaena")
@@ -95,10 +106,47 @@ morpho.output <- morpho.output %>%
 morpho.output <-morpho.output %>%
   filter(!is.na(Q))
 
+# print number of stills measured:
+
+cat("Number of stills images:", nrow(morpho.output), "\n")
+
 # identifiable whales only:
 
-id.morph <- morpho.output%>%
+id.morph <- morpho.output %>%
   filter(!is.na(ID))
+
+cat("Number of stills images with IDs:", nrow(id.morph), "\n")
+cat("Number Identified whals:", length(levels(as.factor(id.morph$ID))), "\n")
+
+
+#convert suckling to true or false: 
+id.morph <- id.morph %>%
+  mutate(suckled = ifelse(suckled !="yes", F, T),
+         suckling = ifelse(suckling !="yes", F, T))
+
+summary(id.morph$suckled)
+
+id.morph$suckled[which(is.na(id.morph$suckled))] <-F
+id.morph$suckling[which(is.na(id.morph$suckling))] <-F
+
+summary(id.morph$suckled)
+summary(id.morph$suckling)
+
+#create 'ever suckling' column
+
+
+id.morph<- id.morph %>%
+  group_by(ID) %>%
+  mutate(suckled_ever = any(suckled, na.rm = TRUE),
+         suckling_ever = any(suckling, na.rm = TRUE)) %>%
+  ungroup()
+summary(id.morph$suckled_ever)
+summary(id.morph$suckling_ever)
+
+
+
+
+
 
 id.mean <- id.morph %>%
   group_by(ID) %>%
@@ -109,11 +157,17 @@ id.mean <- id.morph %>%
             mean_ratio.HF = mean(ratio.HF, na.rm = T), cv_ratio.HF = (sd(ratio.HF, na.rm = T)/mean_ratio.HF), sd_ratio.HF = sd(ratio.HF, na.rm = T),
             n_photos = n(),
             date = first(date),
-            mean_altitude= mean(altitude.c))
+            mean_altitude= mean(altitude.c), 
+            suckled_ever = first(suckled_ever), 
+            suckling_ever = first(suckling_ever))
+
+
+summary(id.mean$suckled_ever)
 
 
 hd<-id.mean%>%
   filter(n_photos>1 & !is.na(mean_HD))
+
 
 hf<-id.mean%>%
   filter(n_photos>1 & !is.na(mean_HF))
