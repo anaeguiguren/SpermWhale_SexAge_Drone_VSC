@@ -8,7 +8,7 @@ library(PresenceAbsence) # builds confusion matrix
 
 
 
-
+# 1. Get data from Morphometrix -----
 getMorphoMetrix  <- function(ROOTfolderpath){
   require(dbplyr); require(dplyr)
 #' @title compMorphometrix
@@ -69,8 +69,74 @@ getMorphoMetrix  <- function(ROOTfolderpath){
    
 }
 
+# 2. getSRTAltitude -----
+getSrtAltitude <- function(data){
+  #read in all flight srt data
+  require(stringr)
+  drone_srt_files <- read.csv("Data/Drone_Logs/Gal2023_Drone_Flight_Logs_srt.csv", header = T)
+  
+  #make matching file name
+  drone_srt_files <- drone_srt_files %>%
+    mutate(mp4_file = basename(videoFile))
+  
+  #obtain snapshot file type: 
+  data <- data %>% 
+    mutate(  # identify vlc and other file snapshot types
+      type = ifelse(str_detect(imageName, "vlc"), "vlc", "boris"),
+      mp4_file = paste0(substr(imageName, 1, 32), ".MP4"),
+      ss_sec = ifelse(type=="vlc", # round down
+                      yes = as.numeric(substr(imageName, 41, 42)) *60 + as.numeric(substr(imageName, 44,45)), 
+                      no = str_extract(imageName, "_([0-9\\.]+)(ns)?\\.png$") %>%
+                        str_remove_all("_|ns|\\.png")%>%
+                        as.numeric()
+      )%>%
+        floor()
+    )
+  
+  #join based on file name and time in video
+  
+  
+  
+  # Join data with drone_srt_log to get altitude based on mp4_file & time match
+  data <- data %>%
+    left_join(drone_srt_files, 
+              by = c("mp4_file" = "mp4_file", "ss_sec" = "videoTime")) %>%
+    select(imageName, ind, video.whale.ID, date, altitude.raw, droneAltitude, ind, TL.px, HF.px, HD.px, image_width = imageWidth, notes, mp4_file, ss_sec
+    )
+  
+  # View result
+  return(data)
+  
+}
 
-#1. Optimizing growth curve parameters ----
+
+
+
+
+
+
+# 3. corrects subtitle altitude to true altitude above sea-level (ASL) based on launch height and correction model----
+#model used is non-hierarchical
+altitudeASL <- function(boat_height =  1.03 - 0.24, 
+                        launch.chest = 1.4, 
+                        camera.height = 0.045, 
+                        altitude.raw){
+  altitude.fix = altitude.raw+launch.chest+camera.height+boat_height
+  altitude.c = 1.40 + altitude.fix*1.017
+  return(altitude.c)
+  
+}
+
+# 4. estimates whale length in meters------
+
+measureWhales<- function(image.width, altitude, length.pixels){
+  alpha = ifelse(image.width == 3840, yes = 0.000328, no = 
+                   ifelse(image.width == 1920, yes = 0.000656, no = NA))
+  length = alpha * altitude * length.pixels
+  return(length)
+}
+
+# 5. Optimizing growth curve parameters ----
 
 #~~~a. Define female and male curve shapes ----
 fem_curve <- function(length, fr, fmax) {
