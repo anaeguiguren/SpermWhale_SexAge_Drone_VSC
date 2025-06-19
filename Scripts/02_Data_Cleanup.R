@@ -146,7 +146,7 @@ summary(id.morph$suckling_ever)
 
 
 
-
+write.csv(id.morph, "Data/Processed_Data/id_unpooled_clean_processed.csv")
 
 id.mean <- id.morph %>%
   group_by(ID) %>%

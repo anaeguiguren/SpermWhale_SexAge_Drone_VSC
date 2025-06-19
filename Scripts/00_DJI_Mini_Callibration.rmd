@@ -239,7 +239,9 @@ dat$length.corrected.rand.int<- morpho.length.alpha(altitude =dat$fit.rand.int,
 dat$length.corrected.rand<- morpho.length.alpha(altitude =dat$fit.rand,
                                       image.width = dat$imageWidth,
                                       length.pixels = dat$pixel.length)
-dat$length.corrected.0 <- dat$bal.length
+
+
+dat$length.corrected.0 <- dat$bal.length #uncorrected
 
 
 
@@ -248,26 +250,10 @@ dat_long <- dat %>%
   pivot_longer(
     cols = starts_with("length.corrected"), 
     names_to = "correction_type", 
-    values_to = "corrected_altitude"
+    values_to = "corrected_length"
   )%>%
-  mutate(error = corrected_altitude - 12.03, 
+  mutate(error = corrected_length - 12.03, 
          error_p = 100*(error/12.03))
-
-
-
-
-
-ggplot(dat_long, aes(x = error_p, fill = correction_type)) +
-  stat_halfeye(alpha = 0.5, adjust = 1) +
-  theme_classic() +
-  labs(
-    title = "Density plots of corrected altitudes",
-    x = "Error %",
-    y = "Density",
-    fill = "Correction Type"
-  )+
-  facet_wrap(~correction_type, ncol = 1)+
-  theme(legend.position = "None")+scale_fill_wa_d("rainier")
 
 
 ```
