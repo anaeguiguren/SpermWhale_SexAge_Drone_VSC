@@ -155,7 +155,7 @@ mal_curve <- function(length, fr, fmax, mr, mmax, chm){
 
 #~~~b. Estimate sum of squares ----
 
-sumsq <- function(params, data, chm, weighted = FALSE){
+sumsq <- function(params, data, chm , weighted = FALSE){
   fr <- params[1]
   fmax <- params[2]
   mr <- params[3]
@@ -182,12 +182,12 @@ sumsq <- function(params, data, chm, weighted = FALSE){
 
 
 #~~~c. Fit parameters using optim ----
-optim_sex <- function(data, chm, pard0, weighted = FALSE){
+optim_sex <- function(data, chm,  pard0, weighted = FALSE){
   objfun <- function(p){ #this is the thing we want to minimize (optimize)
     if(weighted) {
-      sumsq(p, data, chm, TRUE)
+      sumsq(p, data , chm, TRUE)
     }else{
-      sumsq(p, data, chm, FALSE)$ss
+      sumsq(p, data , chm, FALSE)$ss
     }
   }
   
