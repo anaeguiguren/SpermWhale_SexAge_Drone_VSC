@@ -139,6 +139,20 @@ boot_summary<-all_boot %>%
 
 #. population parameters:
 
+# extract bootstrapped parameters:
+hd_params_df <- do.call(rbind, boot_params_hd)
+hd_params_df <- as.data.frame(hd_params_df)
+
+names(hd_params_df) <- c("fr", "fmax", "mr", "mmax")
+
+
+hd_params_hf <- do.call(rbind, boot_params_hf)
+hd_params_hf <- as.data.frame(hd_params_hf)
+
+names(hd_params_hf) <- c("fr", "fmax", "mr", "mmax")
+
+
+save.image(file = "bootstrapped_estimates.RData")
 
 # 4. Visualize -----
 
@@ -163,34 +177,34 @@ size_max <- max(boot_summary$CI_width_HD, boot_summary$CI_width_HF, na.rm = TRUE
 
 
 p1 <- ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
-  geom_point(aes(colour = mean_fem_prob_hd, size = CI_width_HD, 
+  geom_point(aes(fill = mean_fem_prob_hd, size = CI_width_HD, 
                  shape = factor(suckled_ever), alpha = 1.5), alpha = 0.8)+
-  scale_color_wa_c("stuart",  limits = c(color_min, color_max)) +
+  scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
   scale_size(limits = c(size_min, size_max))+
-  scale_shape_manual(values = c("FALSE" = 16, "TRUE" = 4))+
+  scale_shape_manual(values = c("FALSE" = 21, "TRUE" = 24))+
   theme_classic()+
   geom_vline(xintercept = 13.7, linetype = "dashed")+
   labs(title = "A",
     x = "Length (m)",
        y = "Ratio (rostrum - dorsal fin)",
-       colour = "P(fem)",
+       fill = "P(fem)",
        size = "95-CI width",
        shape = "Suckled")+
   theme(legend.position = "null")
 
 
 p2<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
-  geom_point(aes(colour = mean_fem_prob_hf, size = CI_width_HF, 
+  geom_point(aes(fill = mean_fem_prob_hf, size = CI_width_HF, 
                  shape = factor(suckled_ever)), alpha = 0.9)+
-  scale_color_wa_c("stuart", , limits = c(color_min, color_max)) +
+  scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
   scale_size(limits = c(size_min, size_max))+
-  scale_shape_manual(values = c("FALSE" = 16, "TRUE" = 4))+
+  scale_shape_manual(values = c("FALSE" = 21, "TRUE" = 24))+
   theme_classic()+
   geom_vline(xintercept = 13.7, linetype = "dashed")+
   labs(title = "B",
        x = "Length (m)",
                        y = "Ratio (rostrum - flipper base)",
-                       colour = "P(fem)",
+                       fill = "P(fem)",
                        size = "95-CI width",
                        shape = "Suckled")
 p2
@@ -202,17 +216,6 @@ ggsave("Figures/bootstrap_post_prob_models.png",
        comb, width = 10, height = 4)
 
 # 5. visualize parameter estimation variation (HD)----
-# extract bootstrapped parameters:
-hd_params_df <- do.call(rbind, boot_params_hd)
-hd_params_df <- as.data.frame(hd_params_df)
-
-names(hd_params_df) <- c("fr", "fmax", "mr", "mmax")
-
-
-hd_params_hf <- do.call(rbind, boot_params_hf)
-hd_params_hf <- as.data.frame(hd_params_hf)
-
-names(hd_params_hf) <- c("fr", "fmax", "mr", "mmax")
 
 
 # create lines for each bootstrap:
