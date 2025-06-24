@@ -1,3 +1,4 @@
+#04_Bootstrapped_HF_Model_Fitting
 # Growth Curve Parameter Optimization
 # Load necessary libraries and functions
 source("Scripts/functions.R")
@@ -48,18 +49,18 @@ dat_boot <- vector("list", n_boots) #individual estimates of p_fem
 for(i in 1:n_boots){
   
   # each time
-
+  
   tmp.dat <- dat_HF %>%
     group_by(ID) %>%
     slice_sample(n = 1)
   
   
   hd.temp <- optim_sex(tmp.dat %>% mutate(Ratio = R.HD),
-                      chm = 6, 
-                      pard0 = c(nish$Value[3],
-                                nish$Value[1],
-                                nish$Value[4],
-                                nish$Value[2]), weighted = FALSE)
+                       chm = 6, 
+                       pard0 = c(nish$Value[3],
+                                 nish$Value[1],
+                                 nish$Value[4],
+                                 nish$Value[2]), weighted = FALSE)
   
   hf.temp <- optim_sex(tmp.dat %>% mutate(Ratio = R.HF),
                        chm = 6, 
