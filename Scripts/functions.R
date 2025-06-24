@@ -217,6 +217,13 @@ f_probs <- function(params, data, chm = 6, weighted = FALSE) {
   return(post_probs)
 }
 
+m_probs <- function(params, data, chm = 6, weighted = FALSE) {
+  res <- sumsq(params, data, chm)
+  likes <- exp(-res$likes / (2 * res$ss / (nrow(res$likes) - 1)))
+  post_probs <- likes[, 2] / rowSums(likes)
+  return(post_probs)
+}
+
 #~~~e. compute classification performance -----
 model_perf <- function(bin_sex, fem_probs){
   # find threshlold that maximizes area under the curve
