@@ -371,6 +371,7 @@ p3<-ggplot(all_lines_hd, aes(x = Length, y = Ratio,
             linewidth = 0.5, linetype = "dashed", alpha = 0.7) +  # mean lines
   scale_color_manual(values = c("F" = "#344e37", "M" = "#603b79", 
                                 "Fem" = "#74a278", "Mal" = "#aa7dc7"))+
+  geom_vline(xintercept = 13.7, linetype = "dashed")+
   scale_y_continuous(limits = c(0.58, 0.74))+
   theme_classic()+
   labs(x = "Length (m)", y = "Ratio (rostrum - dorsal fin)", title = "A")+
@@ -386,6 +387,7 @@ p4<-ggplot(all_lines_hf, aes(x = Length, y = Ratio,
             linewidth = 0.5, linetype = "dashed", alpha = 0.7) +  # mean lines
   scale_color_manual(values = c("F" = "#344e37", "M" = "#603b79", 
                                 "Fem" = "#74a278", "Mal" = "#aa7dc7"))+
+  geom_vline(xintercept = 13.7, linetype = "dashed")+
   scale_y_continuous(limits = c(0.26, 0.42))+
   theme_classic()+
   labs(x = "Length (m)", y = "Ratio (rostrum - flipper base)", title = "B", 

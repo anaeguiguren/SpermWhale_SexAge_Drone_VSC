@@ -87,7 +87,7 @@ photo.id <-photo.id %>%
 # error check: 
 photo.id %>%
   group_by(ID) %>%
-  summarize(unique_inds = n_distinct(Caption), .groups = "drop") %>%
+  summarize(unique_inds = n_distinct(ind), .groups = "drop") %>%
   filter(unique_inds > 1)  # nice!
 
 
@@ -97,6 +97,8 @@ morpho.output <-morpho.output %>%
   mutate(snapshot.ID = paste(imageName, ind, sep = "_"))
 
 morpho.output<- left_join(morpho.output, photo.id, by  ="snapshot.ID")
+
+
 
 # remove rogue duplicate
 morpho.output <- morpho.output %>%
@@ -109,6 +111,18 @@ morpho.output <-morpho.output %>%
 # print number of stills measured:
 
 cat("Number of stills images:", nrow(morpho.output), "\n")
+
+# number of instances when hf is available:
+length(which(!is.na(morpho.output$ratio.HF)))
+
+
+cat("number of stills with hd:", nrow(morpho.output %>% filter(!is.na(ratio.HD))), "\n")
+cat("number of stills with hf:", nrow(morpho.output %>% filter(!is.na(ratio.HF))), "\n")
+
+# number of instances when sd is available:
+length(which(!is.na(morpho.output$ratio.HD)))
+
+
 
 # identifiable whales only:
 
@@ -166,11 +180,11 @@ summary(id.mean$suckled_ever)
 
 
 hd<-id.mean%>%
-  filter(n_photos>1 & !is.na(mean_HD))
+  filter(n_photos>2 & !is.na(mean_HD))
 
 
 hf<-id.mean%>%
-  filter(n_photos>1 & !is.na(mean_HF))
+  filter(n_photos>2 & !is.na(mean_HF))
 
 
 #save
@@ -179,27 +193,29 @@ write.csv(id.mean, "Data/Processed_Data/id_morpho_output_clean_processed.csv")
 # 2. Explore Quality and identifyiablity-----
 # Load required libraries
 library(ggplot2)
-library(ggpubr)
-library(dplyr)
+library(wacolors)
 
 
 # Create boxplot with significance indicators
 # this makes sense to do median for each snapshot
 
+morpho.output<-morpho.output%>%
+  mutate(idable = ifelse(as.numeric(Q)<3, "no", "yes"))
 
-p1<- ggplot(morpho.output, aes(x = as.factor(Q), y = altitude.c, fill = as.factor(Q))) +
+
+p1<- ggplot(morpho.output, aes(x = as.factor(Q), y = altitude.c, fill = idable)) +
   geom_boxplot() +
-  geom_jitter(width = 0.12, alpha = 0.6) +
-  scale_fill_brewer(palette = "Greens") +
-  theme_classic()+
-  theme(legend.position = "none") +
+  scale_fill_wa_d("coast")+
   geom_hline(yintercept = 70, lty = "dashed")+
-  labs(x = "Q rating", y = "Altitude (m)")
+  labs(x = "Q rating", y = "Corrected altitude (m)", fill = "ID possible")+
+  theme_classic() +
+  theme(legend.position = "bottom")
+
   # Adjust label positions
 
 p1
 
 ggsave("Figures/Altitude_vs_Quality.png",
-       p1, width = 5, height = 5)
+       p1, width = 3.5, height = 3.5)
 
 

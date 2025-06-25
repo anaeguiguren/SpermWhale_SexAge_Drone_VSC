@@ -1,8 +1,10 @@
 # Growth Curve Parameter Optimization
 # Load necessary libraries and functions
+
+rm(list = ls())
+
 source("Scripts/functions.R")
-library(patchwork)
-library(wacolors)
+
 set.seed(1234567)
 
 # 1. Load data ----
@@ -27,6 +29,14 @@ dat_HF <- dat %>%
   ungroup() %>%
   filter(!is.na(R.HF))
 
+summary_data<-dat_HF %>% 
+  group_by(ID)%>%
+  summarize(n_photos = n())
+
+hist(summary_data$n_photos, breaks = 20)
+
+#how many individuals
+cat("Number Identified whals:", length(levels(as.factor(dat_HF$ID))), "\n")
 
 
 # 2. Bootstrap Individual whales -----
