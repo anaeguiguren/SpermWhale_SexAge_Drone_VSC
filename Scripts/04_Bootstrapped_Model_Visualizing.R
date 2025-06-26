@@ -25,15 +25,52 @@ color_max <- max(boot_summary$mean_fem_prob_hd, boot_summary$mean_fem_prob_hf, n
 size_min <- min(boot_summary$CI_width_HD, boot_summary$CI_width_HF, na.rm = TRUE)
 size_max <- max(boot_summary$CI_width_HD, boot_summary$CI_width_HF, na.rm = TRUE)
 
-# make plots
-p1 <- ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
+# make plots:
+
+
+# add whaling references
+
+whaling_lables_hd <- data.frame(
+  Length = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), 
+  Ratio = 0.56, 
+  label = c("NB", "J", "SA", "AF", "AM/MF", "Fmax","MM")
+)
+
+whaling_lables_hf <- data.frame(
+  Length = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), 
+  Ratio = 0.24, 
+  label = c("NB", "J", "SA", "AF", "AM/MF", "Fmax","MM")
+)
+
+
+# make individual lables dataframes:
+#include suckling whale IDs and for sure male IDs (> 13.7 m)
+
+boot_summary<-boot_summary %>% 
+  mutate(short_ID = substr(ID, 10, 11), 
+         label_show =
+           ifelse(mean_length>13.7 | suckled_ever == TRUE,
+                  short_ID, 
+                  ""))
+
+#~~~~i. plot ----
+library(ggrepel)
+  
+  
+p1 <- 
+  ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
   geom_point(aes(fill = mean_fem_prob_hd, size = CI_width_HD, 
                  shape = factor(suckled_ever), alpha = 1.5), alpha = 0.8)+
   scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
   scale_size(limits = c(size_min, size_max))+
   scale_shape_manual(values = c("FALSE" = 21, "TRUE" = 24))+
+  geom_label_repel(aes(label = label_show, fill =mean_fem_prob_hd ), 
+                   box.padding = 1, alpha = .8, max.overlaps = Inf, label.padding = 0.15, size = 2.5)+
   theme_classic()+
-  geom_vline(xintercept = 13.7, linetype = "dashed")+
+  geom_text(data = whaling_lables_hd, aes(x = Length+0.1, y = Ratio, label = label),
+            hjust = 0, size = 2.5, inherit.aes = F)+
+
   labs(title = "A",
        x = "Length (m)",
        y = "Ratio (rostrum - dorsal fin)",
@@ -43,14 +80,19 @@ p1 <- ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
   theme(legend.position = "null")
 
 
-p2<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
+ p2<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+ 
   geom_point(aes(fill = mean_fem_prob_hf, size = CI_width_HF, 
                  shape = factor(suckled_ever)), alpha = 0.9)+
+  geom_label_repel(aes(label = label_show, fill =mean_fem_prob_hf), 
+                    box.padding = 1, alpha = .8, max.overlaps = Inf, size =2.5, label.padding =  0.15)+
   scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
   scale_size(limits = c(size_min, size_max))+
   scale_shape_manual(values = c("FALSE" = 21, "TRUE" = 24))+
   theme_classic()+
-  geom_vline(xintercept = 13.7, linetype = "dashed")+
+  geom_text(data = whaling_lables_hf, aes(x = Length+0.1, y = Ratio, label = label),
+            hjust = 0, size =2.5, inherit.aes = F)+
+ 
   labs(title = "B",
        x = "Length (m)",
        y = "Ratio (rostrum - flipper base)",
@@ -368,20 +410,23 @@ mean_lines_hf <- rbind(mean_f_line_hf, mean_m_line_hf)
 
 
 #~~~~~~~iii.plot----
+
 #HD
 
 p3<-ggplot(all_lines_hd, aes(x = Length, y = Ratio, 
                          group = interaction(Bootstrap, Sex),
                          colour = Sex))+
-  geom_line(alpha = 0.1, linewidth = 0.5)+
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
+  geom_line(alpha = 0.3, linewidth = 0.5)+
   geom_line(data = mean_lines_hd, aes(x = Length, y = Ratio, colour = Sex), 
-            linewidth = 0.5, linetype = "dashed", alpha = 0.7) +  # mean lines
+            linewidth = 1, alpha = 0.7) +  # mean lines
   scale_color_manual(values = c("F" = "#344e37", "M" = "#603b79", 
                                 "Fem" = "#74a278", "Mal" = "#aa7dc7"))+
-  geom_vline(xintercept = 13.7, linetype = "dashed")+
-  scale_y_continuous(limits = c(0.58, 0.74))+
+  scale_y_continuous(limits = c(0.56, 0.74))+
+  geom_text(data = whaling_lables_hd, aes(x = Length+0.1, y = Ratio, label = label),
+            hjust = 0, size = 2.5, inherit.aes = F)+
   theme_classic()+
-  labs(x = "Length (m)", y = "Ratio (rostrum - dorsal fin)", title = "A")+
+  labs(x = "Length (m)", y = "R - Dorsal", title = "A")+
   theme(legend.position = "null")
 
 #HF
@@ -389,15 +434,17 @@ p3<-ggplot(all_lines_hd, aes(x = Length, y = Ratio,
 p4<-ggplot(all_lines_hf, aes(x = Length, y = Ratio, 
                              group = interaction(Bootstrap, Sex),
                              colour = Sex))+
-  geom_line(alpha = 0.1, linewidth = 0.5)+
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
+  geom_line(alpha = 0.3, linewidth = 0.5)+
   geom_line(data = mean_lines_hf, aes(x = Length, y = Ratio, colour = Sex), 
-            linewidth = 0.5, linetype = "dashed", alpha = 0.7) +  # mean lines
+            linewidth = 1, alpha = 0.7) +  # mean lines
   scale_color_manual(values = c("F" = "#344e37", "M" = "#603b79", 
                                 "Fem" = "#74a278", "Mal" = "#aa7dc7"))+
-  geom_vline(xintercept = 13.7, linetype = "dashed")+
-  scale_y_continuous(limits = c(0.26, 0.42))+
+  scale_y_continuous(limits = c(0.24, 0.42))+
+  geom_text(data = whaling_lables_hf, aes(x = Length+0.1, y = Ratio, label = label),
+            hjust = 0, size = 2.5, inherit.aes = F)+
   theme_classic()+
-  labs(x = "Length (m)", y = "Ratio (rostrum - flipper base)", title = "B", 
+  labs(x = "Length (m)", y = "R - Flipper", title = "B", 
        colour = "Sex")+
   theme(legend.position = "null")
   
@@ -408,7 +455,7 @@ curves <- p3 + p4
 
 #curves
 ggsave("Figures/bootstrap_params_curves.png",
-       curves, width = 7, height = 4)
+       curves, width = 8, height = 4)
 
 
 # 6. visualize individual - level variations----
