@@ -4,6 +4,7 @@ rm(list = ls())
 load("bootstrapped_estimates.RData")
 source("Scripts/functions.R")
 library(wacolors)
+library(patchwork)
 
 # 1. Bootstrapped p_f for models based on HD and HF----
 #compute confidence interval width for (p(f)) and p(m)
@@ -73,7 +74,7 @@ p1 <-
 
   labs(title = "A",
        x = "Length (m)",
-       y = "Ratio (rostrum - dorsal fin)",
+       y = "R - Dorsal",
        fill = "P(fem)",
        size = "95-CI width",
        shape = "Suckled")+
@@ -95,7 +96,7 @@ p1 <-
  
   labs(title = "B",
        x = "Length (m)",
-       y = "Ratio (rostrum - flipper base)",
+       y = "R - Flipper",
        fill = "P(fem)",
        size = "95-CI width",
        shape = "Suckled")
@@ -106,6 +107,11 @@ comb
 
 ggsave("Figures/bootstrap_post_prob_models.png",
        comb, width = 10, height = 4)
+
+#~~~~ii. summarize -----
+
+
+
 
 # 2. Parameter estimates ----
 #~~~~a. plot----
