@@ -2,6 +2,8 @@
 rm(list = ls())
 
 load("bootstrapped_estimates.RData")
+source("Scripts/functions.R")
+library(wacolors)
 
 # 1. Bootstrapped p_f for models based on HD and HF----
 #compute confidence interval width for (p(f)) and p(m)
@@ -78,7 +80,7 @@ hd_params<-pivot_longer(data = hd_params_df,
              names_to = "parameters", 
              values_to = "estimate")
 
-hd_params$method <- "HD"
+hd_params$method <- "R - Dorsal"
 #hf metrics
 hd_params_hf$boot <-1:nrow(hd_params_hf)
 
@@ -87,25 +89,30 @@ hf_params<-pivot_longer(data = hd_params_hf,
                         names_to = "parameters", 
                         values_to = "estimate")
 
-hf_params$method <- "HF"
+hf_params$method <- "R - Flipper"
 
 #combine:
 all_params <- bind_rows(hd_params, hf_params)
 
+param_lables <- c("A. maxf", "B. fr", "C. maxm", "D. mr")
 
 param_plot<- all_params %>%
-  ggplot(aes(x = estimate, fill = method, colour = method))+
+  ggplot(aes(x = method, y = estimate, colour = method))+
   geom_boxplot(alpha = 0.8)+
-  facet_wrap(~parameters, scales = "free_x", ncol =1)+
-  scale_fill_manual(values = c("HD" = "black", "HF" = "gray60")) +
-  scale_color_manual(values = c("HD" = "black", "HF" = "gray60")) +
-  labs(x = "Estimate", y = "Density")+
-  theme_classic()
+  coord_flip()+
+  facet_wrap(~parameters, scales = "free_x", ncol =2)+
+  scale_color_wa_d("lopez") +
+  labs(y = "Estimate", x = "R Metric")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(), 
+        legend.position = "null")
+  
 
-
+param_plot
 
 ggsave("Figures/bootstrap_params_models.png",
-       param_plot, width = 7, height = 7)
+       param_plot, width = 7, height = 3.5)
 
 
 
