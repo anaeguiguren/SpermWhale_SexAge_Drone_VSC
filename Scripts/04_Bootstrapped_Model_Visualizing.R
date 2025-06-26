@@ -110,9 +110,12 @@ ggsave("Figures/bootstrap_post_prob_models.png",
 
 #~~~~ii. summarize -----
 
+boot_summary %>%
+  filter(CI_width_HD< 0.05)
 
 
-
+boot_summary %>%
+  filter(ID == "GAL2023_074")
 # 2. Parameter estimates ----
 #~~~~a. plot----
 library(ggdist)
