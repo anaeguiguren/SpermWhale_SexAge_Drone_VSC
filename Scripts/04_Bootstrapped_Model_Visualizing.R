@@ -33,13 +33,13 @@ size_max <- max(boot_summary$CI_width_HD, boot_summary$CI_width_HF, na.rm = TRUE
 
 whaling_lables_hd <- data.frame(
   Length = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), 
-  Ratio = 0.56, 
+  Ratio = 0.58, 
   label = c("NB", "J", "SA", "AF", "AM/MF", "Fmax","MM")
 )
 
 whaling_lables_hf <- data.frame(
   Length = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), 
-  Ratio = 0.24, 
+  Ratio = 0.26, 
   label = c("NB", "J", "SA", "AF", "AM/MF", "Fmax","MM")
 )
 
@@ -54,6 +54,15 @@ boot_summary<-boot_summary %>%
                   short_ID, 
                   ""))
 
+
+#make pd_seen column (giving/receiving)
+
+
+boot_summary<- boot_summary %>%
+  mutate(pd_detected = ifelse(suckling_ever == TRUE, "doing",
+                              ifelse(suckled_ever == TRUE, "receiving", "no")))
+
+
 #~~~~i. plot ----
 library(ggrepel)
   
@@ -62,10 +71,10 @@ p1 <-
   ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
   geom_point(aes(fill = mean_fem_prob_hd, size = CI_width_HD, 
-                 shape = factor(suckled_ever), alpha = 1.5), alpha = 0.8)+
+                 shape = factor(pd_detected), alpha = 1.5), alpha = 0.8)+
   scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
   scale_size(limits = c(size_min, size_max))+
-  scale_shape_manual(values = c("FALSE" = 21, "TRUE" = 24))+
+  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
   geom_label_repel(aes(label = label_show, fill =mean_fem_prob_hd ), 
                    box.padding = 1, alpha = .8, max.overlaps = Inf, label.padding = 0.15, size = 2.5)+
   theme_classic()+
@@ -84,13 +93,13 @@ p1 <-
  p2<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+ 
   geom_point(aes(fill = mean_fem_prob_hf, size = CI_width_HF, 
-                 shape = factor(suckled_ever)), alpha = 0.9)+
+                 shape = factor(pd_detected)), alpha = 0.9)+
   geom_label_repel(aes(label = label_show, fill =mean_fem_prob_hf), 
                     box.padding = 1, alpha = .8, max.overlaps = Inf, size =2.5, label.padding =  0.15)+
   scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
   scale_size(limits = c(size_min, size_max))+
-  scale_shape_manual(values = c("FALSE" = 21, "TRUE" = 24))+
-  theme_classic()+
+   scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
+   theme_classic()+
   geom_text(data = whaling_lables_hf, aes(x = Length+0.1, y = Ratio, label = label),
             hjust = 0, size =2.5, inherit.aes = F)+
  
@@ -99,14 +108,14 @@ p1 <-
        y = "R - Flipper",
        fill = "P(fem)",
        size = "95-CI width",
-       shape = "Suckled")
+       shape = "PD observed")
 
 
 comb <- p1 + p2
 comb 
 
 ggsave("Figures/bootstrap_post_prob_models.png",
-       comb, width = 10, height = 4)
+       comb, width = 12, height = 5)
 
 #~~~~ii. summarize -----
 
