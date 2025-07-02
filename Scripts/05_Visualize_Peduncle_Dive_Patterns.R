@@ -1,6 +1,7 @@
 #peduncle dive summaries:
 library(tidyr)
 library(ggplot2)
+library(dplyr)
 
 
 #load data
@@ -39,6 +40,10 @@ whaling_lables <- data.frame(
 )
 
 
+
+
+#PD observed vs. length -----
+
 p<- ggplot(id.mean.p, aes(x = factor(pd_detected), y = mean_TL))+
   geom_boxplot(outlier.shape = NA)+
   geom_jitter(aes(fill = mean_fem_prob_hf),shape = 21, width = 0.25, alpha = 0.8, size =2)+
@@ -50,8 +55,31 @@ p<- ggplot(id.mean.p, aes(x = factor(pd_detected), y = mean_TL))+
   labs(x = "PD observed", y = "Mean Length (m)", fill = "P(fem)")
 
 p
+
+
 ggsave("Figures/boxplot_peduncle_dives.png",
        p, width = 3.5, height = 3.5)
+
+
+
+#p_fem by age class:
+
+#age classes: 
+id.mean.p <- id.mean.p %>%
+  mutate(lit.sex.age=
+           ifelse(mean_TL<5.5, "calf", 
+                  ifelse(mean_TL < 7.5, "juvenile", 
+                         ifelse(mean_TL < 12.5, "adfem_juv", 
+                                ifelse(mean_TL < 13.7 , "adult_male", 
+                                       "mature_male")))))%>%
+  mutate(lit.sex.age = factor(lit.sex.age, levels = c("calf", "juvenile", "adfem_juv", "adult_male", "mature_male")))
+
+
+
+ggplot(id.mean.p, aes(x = factor(lit.sex.age), y = mean_fem_prob_hf, colour = pd_detected))+
+  geom_jitter()
+  #geom_jitter()
+
 
 #print summary statistics:
 
