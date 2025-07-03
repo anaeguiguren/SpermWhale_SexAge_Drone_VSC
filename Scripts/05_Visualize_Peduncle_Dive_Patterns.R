@@ -35,7 +35,7 @@ id.mean.p$pd_detected <- factor(id.mean.p$pd_detected, levels = c("doing", "rece
 # age lables
 whaling_lables <- data.frame(
   Length = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), 
-  label = c("NB", "J", "SA", "AF", "AM/MF", "Fmax","MM"),
+  label = c("C", "J", "SA", "AF", "AM/MF", "Fmax","MM"),
   x = 1
 )
 
@@ -44,21 +44,27 @@ whaling_lables <- data.frame(
 
 #PD observed vs. length -----
 
+#make a shape column:
+
+id.mean.p<- id.mean.p %>%
+  mutate(point_shape = ifelse(is.na(mean_fem_prob_hf), "known","unknown"))
+
 p<- ggplot(id.mean.p, aes(x = factor(pd_detected), y = mean_TL))+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(aes(fill = mean_fem_prob_hf),shape = 21, width = 0.25, alpha = 0.8, size =2)+
+  geom_jitter(aes(fill = mean_fem_prob_hf, shape = point_shape), width = 0.25, alpha = 0.8, size =2)+
+  scale_shape_manual(values = c("unknown" = 21, "known" = 8))+
   scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
   geom_hline(yintercept = whaling_lables$Length, colour = "gray", linetype = "dashed")+
   geom_text(data = whaling_lables, aes(y = Length+0.15, x = 0.5, label = label),
             hjust = 0, size = 2.5, inherit.aes = F)+
   theme_classic()+
-  labs(x = "PD observed", y = "Mean Length (m)", fill = "P(fem)")
+  labs(x = "PD observed", y = "Length (m)", fill = "P(f)")
 
 p
 
 
 ggsave("Figures/boxplot_peduncle_dives.png",
-       p, width = 3.5, height = 3.5)
+       p, width =7, height = 4)
 
 
 

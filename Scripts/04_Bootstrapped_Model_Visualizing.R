@@ -17,6 +17,10 @@ boot_summary$CI_width_HD_male <- boot_summary$m_prob_hd_CI_hi - boot_summary$m_p
 boot_summary$CI_width_HF_male <- boot_summary$m_prob_hf_CI_hi - boot_summary$m_prob_hf_CI_low
 #they are equivalent -leave them be!
 
+
+#save
+write.csv(boot_summary, "Data/Processed_Data/boot_summary_id.csv")
+
 #set scale limits so that same legend can be applied to both plots:
 # Color scales
 color_min <- min(boot_summary$mean_fem_prob_hd, boot_summary$mean_fem_prob_hf, na.rm = TRUE)
@@ -33,14 +37,14 @@ size_max <- max(boot_summary$CI_width_HD, boot_summary$CI_width_HF, na.rm = TRUE
 
 whaling_lables_hd <- data.frame(
   Length = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), 
-  Ratio = 0.58, 
-  label = c("NB", "J", "SA", "AF", "AM/MF", "Fmax","MM")
+  Ratio = 0.78, 
+  label = c("C", "J", "SA", "AF", "AM/MF", "Fmax","MM")
 )
 
 whaling_lables_hf <- data.frame(
   Length = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), 
-  Ratio = 0.26, 
-  label = c("NB", "J", "SA", "AF", "AM/MF", "Fmax","MM")
+  Ratio = 0.40, 
+  label = c("C", "J", "SA", "AF", "AM/MF", "Fmax","MM")
 )
 
 
@@ -75,17 +79,17 @@ p1 <-
   scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
   scale_size(limits = c(size_min, size_max))+
   scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
-  geom_label_repel(aes(label = label_show, fill =mean_fem_prob_hd ), 
-                   box.padding = 1, alpha = .8, max.overlaps = Inf, label.padding = 0.15, size = 2.5)+
+  geom_text_repel(aes(label = label_show,), 
+                  box.padding = 1, alpha = .8, max.overlaps = Inf, size =3)+
   theme_classic()+
   geom_text(data = whaling_lables_hd, aes(x = Length+0.1, y = Ratio, label = label),
             hjust = 0, size = 2.5, inherit.aes = F)+
 
-  labs(title = "A",
+  labs(title = "a)",
        x = "Length (m)",
-       y = "R - Dorsal",
-       fill = "P(fem)",
-       size = "95-CI width",
+       y = expression(NR[dorsal]),      
+       fill = "P(f)",
+       size = "95%CI width",
        shape = "Suckled")+
   theme(legend.position = "null")
 
@@ -94,8 +98,8 @@ p1 <-
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+ 
   geom_point(aes(fill = mean_fem_prob_hf, size = CI_width_HF, 
                  shape = factor(pd_detected)), alpha = 0.9)+
-  geom_label_repel(aes(label = label_show, fill =mean_fem_prob_hf), 
-                    box.padding = 1, alpha = .8, max.overlaps = Inf, size =2.5, label.padding =  0.15)+
+  geom_text_repel(aes(label = label_show,), 
+                    box.padding = 1, alpha = .8, max.overlaps = Inf, size =3)+
   scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
   scale_size(limits = c(size_min, size_max))+
    scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
@@ -103,11 +107,11 @@ p1 <-
   geom_text(data = whaling_lables_hf, aes(x = Length+0.1, y = Ratio, label = label),
             hjust = 0, size =2.5, inherit.aes = F)+
  
-  labs(title = "B",
+  labs(title = "b)",
        x = "Length (m)",
-       y = "R - Flipper",
-       fill = "P(fem)",
-       size = "95-CI width",
+       y = expression(NR[flipper]),      
+       fill = "P(f)",
+       size = "95% CI width",
        shape = "PD observed")
 
 
@@ -115,7 +119,7 @@ comb <- p1 + p2
 comb 
 
 ggsave("Figures/bootstrap_post_prob_models.png",
-       comb, width = 12, height = 5)
+       comb, width = 9, height = 4)
 
 #~~~~ii. summarize -----
 
@@ -157,12 +161,17 @@ all_params <- bind_rows(hd_params, hf_params)
 param_lables <- c("A. maxf", "B. fr", "C. maxm", "D. mr")
 
 param_plot<- all_params %>%
-  ggplot(aes(x = method, y = estimate, colour = method))+
+  ggplot(aes(x = method, y = estimate))+
   geom_boxplot(alpha = 0.8)+
+  scale_x_discrete(
+    labels = c(
+      "R - Flipper" = expression(NR[flipper]), 
+      "R - Dorsal" = expression(NR[dorsal])
+    )
+  )+
   coord_flip()+
   facet_wrap(~parameters, scales = "free_x", ncol =2)+
-  scale_color_wa_d("lopez") +
-  labs(y = "Estimate", x = "R Metric")+
+  labs(y = "Estimate", x = "NR Metric")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(), 
@@ -435,45 +444,117 @@ p3<-ggplot(all_lines_hd, aes(x = Length, y = Ratio,
                          group = interaction(Bootstrap, Sex),
                          colour = Sex))+
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
-  geom_line(alpha = 0.3, linewidth = 0.5)+
-  geom_line(data = mean_lines_hd, aes(x = Length, y = Ratio, colour = Sex), 
-            linewidth = 1, alpha = 0.7) +  # mean lines
+  geom_line(alpha = 0.05, linewidth = 0.5)+
+  geom_line(data = mean_f_line_hd, aes(x = Length, y = Ratio, colour = Sex), 
+            linewidth = 1, alpha = 0.6) +  # mean lines
+  geom_line(data = mean_m_line_hd, aes(x = Length, y = Ratio, colour = Sex), 
+            linewidth =1, alpha = 0.6, linetype = "dashed") +  # mean lines
   scale_color_manual(values = c("F" = "#344e37", "M" = "#603b79", 
                                 "Fem" = "#74a278", "Mal" = "#aa7dc7"))+
   scale_y_continuous(limits = c(0.56, 0.74))+
-  geom_text(data = whaling_lables_hd, aes(x = Length+0.1, y = Ratio, label = label),
+  geom_text(data = whaling_lables_hd, aes(x = Length+0.1,label = label),
+            y =0.745,
             hjust = 0, size = 2.5, inherit.aes = F)+
   theme_classic()+
-  labs(x = "Length (m)", y = "R - Dorsal", title = "A")+
+  labs(x = "Length (m)", y = expression(NR[dorsal]), title = "a)")+
   theme(legend.position = "null")
-
+p3
 #HF
 
 p4<-ggplot(all_lines_hf, aes(x = Length, y = Ratio, 
                              group = interaction(Bootstrap, Sex),
                              colour = Sex))+
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
-  geom_line(alpha = 0.3, linewidth = 0.5)+
-  geom_line(data = mean_lines_hf, aes(x = Length, y = Ratio, colour = Sex), 
-            linewidth = 1, alpha = 0.7) +  # mean lines
+  geom_line(alpha = 0.05, linewidth = 0.5)+
+  geom_line(data = mean_f_line_hf, aes(x = Length, y = Ratio, colour = Sex), 
+            linewidth = 1, alpha = 0.6) +  # mean lines
+  geom_line(data = mean_m_line_hf, aes(x = Length, y = Ratio, colour = Sex), 
+            linewidth =1, alpha = 0.6, linetype = "dashed") +  # mean lines
   scale_color_manual(values = c("F" = "#344e37", "M" = "#603b79", 
                                 "Fem" = "#74a278", "Mal" = "#aa7dc7"))+
   scale_y_continuous(limits = c(0.24, 0.42))+
-  geom_text(data = whaling_lables_hf, aes(x = Length+0.1, y = Ratio, label = label),
+  geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
+            y = 0.425,
             hjust = 0, size = 2.5, inherit.aes = F)+
   theme_classic()+
-  labs(x = "Length (m)", y = "R - Flipper", title = "B", 
+  labs(x = "Length (m)", y = expression(NR[flipper]), title = "b)", 
        colour = "Sex")+
   theme(legend.position = "null")
   
 
-
+p4
 
 curves <- p3 + p4
 
 #curves
 ggsave("Figures/bootstrap_params_curves.png",
        curves, width = 8, height = 4)
+
+
+
+
+# 7. Bootstrapped p(f) + mean curves----
+
+
+p5  <- ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
+  geom_line(data = mean_f_line_hd %>% filter(Length < 12), aes(x = Length, y = Ratio), 
+            linewidth = 1, alpha = 1, colour = "#344e37") +  # mean lines
+  geom_line(data = mean_m_line_hd, aes(x = Length, y = Ratio), 
+            linewidth =1, alpha = 1, linetype = "dashed", colour = "#603b79") +  # mean lines
+  geom_point(aes(fill = mean_fem_prob_hd, size = CI_width_HD, 
+                 shape = factor(pd_detected), alpha = 1.5), alpha = 0.8)+
+  scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
+  scale_size(limits = c(size_min, size_max))+
+  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
+  geom_text_repel(aes(label = label_show,), 
+                  box.padding = 1, alpha = .8, max.overlaps = Inf, size =3)+
+  theme_classic()+
+  geom_text(data = whaling_lables_hd, aes(x = Length+0.1, label = label),
+            y = 0.71,
+            hjust = 0, size = 2.5, inherit.aes = F)+
+  
+  labs(title = "a)",
+       x = "Length (m)",
+       y = expression(NR[dorsal]),      
+       fill = "P(f)",
+       size = "95%CI width",
+       shape = "Suckled")+
+  theme(legend.position = "null")
+
+
+p6<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+ 
+  geom_line(data = mean_f_line_hf %>% filter(Length < 12), aes(x = Length, y = Ratio), 
+            linewidth = 1, alpha = 1, colour = "#344e37") +  # mean lines
+  geom_line(data = mean_m_line_hf, aes(x = Length, y = Ratio), 
+            linewidth =1, alpha = 1, linetype = "dashed", colour = "#603b79") +  # mean lines
+  
+  geom_point(aes(fill = mean_fem_prob_hf, size = CI_width_HF, 
+                 shape = factor(pd_detected)), alpha = 0.9)+
+  geom_text_repel(aes(label = label_show,), 
+                  box.padding = 1, alpha = .8, max.overlaps = Inf, size =3)+
+  scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
+  scale_size(limits = c(size_min, size_max))+
+  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
+  theme_classic()+
+  geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
+            y = 0.413,
+            hjust = 0, size =2.5, inherit.aes = F)+
+  
+  labs(title = "b)",
+       x = "Length (m)",
+       y = expression(NR[flipper]),      
+       fill = "P(f)",
+       size = "95% CI width",
+       shape = "PD observed")
+
+
+comb2 <- p5 + p6
+comb2 
+
+ggsave("Figures/bootstrap_post_prob_models_mean_curves.png",
+       comb2, width = 9, height = 4)
 
 
 # 6. visualize individual - level variations----
@@ -491,3 +572,4 @@ boot_summary%>%
   geom_errorbar(aes(ymin = prob_hf_CI_low, ymax = prob_hf_CI_hi ))+
   geom_point(aes(shape = suckled_ever))+
   theme_classic()
+
