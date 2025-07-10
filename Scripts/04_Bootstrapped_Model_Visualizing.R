@@ -2,7 +2,6 @@
 rm(list = ls())
 
 load("bootstrapped_estimates.RData")
-library(colorBlindness)
 source("Scripts/functions.R")
 library(wacolors)
 library(patchwork)
@@ -13,10 +12,21 @@ library(patchwork)
 boot_summary$CI_width_HD <- boot_summary$prob_hd_CI_hi - boot_summary$prob_hd_CI_low
 boot_summary$CI_width_HF <- boot_summary$prob_hf_CI_hi - boot_summary$prob_hf_CI_low
 
+boot_summary$CI_width_R.HD <- unname(boot_summary$R.HD_CI_hi) - unname(boot_summary$R.HD_CI_low)
+boot_summary$CI_width_R.HF <- unname(boot_summary$R.HF_CI_hi) - unname(boot_summary$R.HF_CI_low)
+
 #male
 boot_summary$CI_width_HD_male <- boot_summary$m_prob_hd_CI_hi - boot_summary$m_prob_hd_CI_low
 boot_summary$CI_width_HF_male <- boot_summary$m_prob_hf_CI_hi - boot_summary$m_prob_hf_CI_low
 #they are equivalent -leave them be!
+
+#CV for length,hf, hd
+
+boot_summary$CV_length <- (boot_summary$sd_length/boot_summary$mean_length)*100
+boot_summary$CV_HD <- (boot_summary$sd_R.HD/boot_summary$mean_R.HD)*100
+boot_summary$CV_HF <- (boot_summary$sd_R.HF/boot_summary$mean_R.HF)*100
+
+
 
 
 #save
@@ -86,6 +96,23 @@ mean(boot_summary$length_CI_width/boot_summary$mean_length*100)
 sd(boot_summary$length_CI_width/boot_summary$mean_length*100)
 
 
+range(boot_summary$mean_length)
+hist(boot_summary$mean_length, breaks = 20)
+quantile(boot_summary$mean_length, probs = c(0.05, 0.95))
+
+#widths:
+
+mean(boot_summary$CI_width_R.HD)
+sd(boot_summary$CI_width_R.HD)
+
+mean(boot_summary$CI_width_R.HF)
+sd(boot_summary$CI_width_R.HF)
+
+
+#individual cvs -
+
+
+
 #~~~ii. plots----
 
 # make plots:
@@ -143,49 +170,62 @@ ggsave("Figures/bootstrap_length_NR_flipper.png",
 #~~~~i. plot ----
 library(ggrepel)
   
+
+#highlight very certain points:
+boot_summary$high_cert_HD <- ifelse(boot_summary$CI_width_HD<= 0.05, "cert", "uncert")
+
+boot_summary$high_cert_HF <- ifelse(boot_summary$CI_width_HF<= 0.05, "cert", "uncert")
   
-p1 <- 
-  ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
-  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
-  geom_point(aes(fill = mean_fem_prob_hd, size = CI_width_HD, 
-                 shape = factor(pd_detected), alpha = 1.5), alpha = 0.8)+
-  scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
-  scale_size(limits = c(size_min, size_max))+
-  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
-  geom_text_repel(aes(label = label_show,), 
-                  box.padding = 1, alpha = .8, max.overlaps = Inf, size =3)+
-  theme_classic()+
-  geom_text(data = whaling_lables_hd, aes(x = Length+0.1, y = Ratio, label = label),
-            hjust = 0, size = 2.5, inherit.aes = F)+
-
-  labs(title = "a)",
-       x = "Length (m)",
-       y = expression(NR[dorsal]),      
-       fill = "P(f)",
-       size = "95%CI width",
-       shape = "Suckled")+
-  theme(legend.position = "null")
-
-
- p2<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
-  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+ 
-  geom_point(aes(fill = mean_fem_prob_hf, size = CI_width_HF, 
-                 shape = factor(pd_detected)), alpha = 0.9)+
-  geom_text_repel(aes(label = label_show,), 
-                    box.padding = 1, alpha = .8, max.overlaps = Inf, size =3)+
-  scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
-  scale_size(limits = c(size_min, size_max))+
-   scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
-   theme_classic()+
-  geom_text(data = whaling_lables_hf, aes(x = Length+0.1, y = Ratio, label = label),
-            hjust = 0, size =2.5, inherit.aes = F)+
- 
+p1 <- ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD)) +
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed") + 
+  geom_point(aes(colour = mean_fem_prob_hd, fill = mean_fem_prob_hd,
+                 shape = factor(pd_detected)), size = 2, alpha = 0.9) +
+  # Black outline only for "cert" points
+  geom_point(data = subset(boot_summary, high_cert_HD == "cert"),
+             aes(x = mean_length, y = mean_R.HD, 
+                 shape = factor(pd_detected)),
+             color = "black", stroke = 0.8, size = 2, fill = NA, inherit.aes = FALSE) +
+  geom_text_repel(aes(label = label_show), 
+                  box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
+  scale_fill_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
+  scale_color_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
+  scale_size(limits = c(size_min, size_max)) +
+  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22)) +
+  theme_classic() +
+  geom_text(data = whaling_lables_hf, aes(x = Length + 0.1, label = label),
+            hjust = 0, y = 0.71, size = 2.5, inherit.aes = FALSE) +
   labs(title = "b)",
        x = "Length (m)",
        y = expression(NR[flipper]),      
        fill = "P(f)",
        size = "95% CI width",
-       shape = "PD observed")
+       shape = "PD observed")+theme(legend.position = "none")
+
+
+p2 <- ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF)) +
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed") + 
+  geom_point(aes(colour = mean_fem_prob_hf, fill = mean_fem_prob_hf,
+                 shape = factor(pd_detected)), size = 2, alpha = 0.9) +
+  # Black outline only for "cert" points
+  geom_point(data = subset(boot_summary, high_cert == "cert"),
+             aes(x = mean_length, y = mean_R.HF, 
+                 shape = factor(pd_detected)),
+             color = "black", stroke = 0.8, size = 2, fill = NA, inherit.aes = FALSE) +
+  geom_text_repel(aes(label = label_show), 
+                  box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
+  scale_fill_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
+  scale_color_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
+  scale_size(limits = c(size_min, size_max)) +
+  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22)) +
+  theme_classic() +
+  geom_text(data = whaling_lables_hf, aes(x = Length + 0.1, label = label),
+            hjust = 0, y = 0.412, size = 2.5, inherit.aes = FALSE) +
+  labs(title = "b)",
+       x = "Length (m)",
+       y = expression(NR[flipper]),      
+       fill = "P(f)",
+       size = "95% CI width",
+       shape = "PD observed")+guides(colour = "none")
 
 
 comb <- p1 + p2
@@ -193,6 +233,11 @@ comb
 
 ggsave("Figures/bootstrap_post_prob_models.png",
        comb, width = 9, height = 4)
+
+
+ggsave("Figures/bootstrap_post_prob_models_HF.png",
+       p2 + labs(title = ""), width = 8, height = 4)
+
 
 #~~~~ii. summarize -----
 
@@ -367,7 +412,7 @@ max.L.M <- 16.5 #Max male length
 
 #length sequences:
 x_F <- seq(min.L, max.L.F, by = 0.2)
-x_M <- seq(min.L, max.L.M, by = 0.2)
+x_M <- seq(6, max.L.M, by = 0.2)
 
 #~~~~~~~i. HD-----
 #loop through:
@@ -522,8 +567,8 @@ p3<-ggplot(all_lines_hd, aes(x = Length, y = Ratio,
             linewidth = 1, alpha = 0.6) +  # mean lines
   geom_line(data = mean_m_line_hd, aes(x = Length, y = Ratio, colour = Sex), 
             linewidth =1, alpha = 0.6, linetype = "dashed") +  # mean lines
-  scale_color_manual(values = c("F" = "#344e37", "M" = "#603b79", 
-                                "Fem" = "#74a278", "Mal" = "#aa7dc7"))+
+  scale_color_manual(values = c("F" = "#2e3a29", "M" = "#92cddb", 
+                                "Fem" = "#899e80", "Mal" = "#cee3e8"))+
   scale_y_continuous(limits = c(0.56, 0.74))+
   geom_text(data = whaling_lables_hd, aes(x = Length+0.1,label = label),
             y =0.745,
@@ -543,19 +588,17 @@ p4<-ggplot(all_lines_hf, aes(x = Length, y = Ratio,
             linewidth = 1, alpha = 0.6) +  # mean lines
   geom_line(data = mean_m_line_hf, aes(x = Length, y = Ratio, colour = Sex), 
             linewidth =1, alpha = 0.6, linetype = "dashed") +  # mean lines
-  scale_color_manual(values = c("F" = "#344e37", "M" = "#603b79", 
-                                "Fem" = "#74a278", "Mal" = "#aa7dc7"))+
+
+  scale_color_manual(values = c("F" = "#2e3a29", "M" = "#92cddb", 
+                                "Fem" = "#899e80", "Mal" = "#cee3e8"))+
   scale_y_continuous(limits = c(0.24, 0.42))+
   geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
             y = 0.425,
             hjust = 0, size = 2.5, inherit.aes = F)+
   theme_classic()+
   labs(x = "Length (m)", y = expression(NR[flipper]), title = "b)", 
-       colour = "Sex")+
-  theme(legend.position = "null")
-  
-
-p4
+       colour = "Sex")
+ 
 
 curves <- p3 + p4
 
@@ -563,25 +606,33 @@ curves <- p3 + p4
 ggsave("Figures/bootstrap_params_curves.png",
        curves, width = 8, height = 4)
 
-
+ggsave("Figures/bootstrap_params_curves.png",
+       curves, width = 8, height = 4)
 
 
 # 7. Bootstrapped p(f) + mean curves----
 
 
-p5  <- ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
+p5  <-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
   geom_line(data = mean_f_line_hd %>% filter(Length < 12), aes(x = Length, y = Ratio), 
-            linewidth = 1, alpha = 1, colour = "#344e37") +  # mean lines
+            linewidth = 1, alpha = 1, colour = "#2e3a29") +  # mean lines
   geom_line(data = mean_m_line_hd, aes(x = Length, y = Ratio), 
-            linewidth =1, alpha = 1, linetype = "dashed", colour = "#603b79") +  # mean lines
-  geom_point(aes(fill = mean_fem_prob_hd, size = CI_width_HD, 
-                 shape = factor(pd_detected), alpha = 1.5), alpha = 0.8)+
-  scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
+            linewidth =1, alpha = 1, linetype = "dashed", colour = "#92cddb") +  # mean lines
+  geom_point(aes(colour = mean_fem_prob_hd, fill = mean_fem_prob_hd,
+                 shape = factor(pd_detected)), size = 2, alpha = 0.9) +
+  geom_text_repel(aes(label = label_show), 
+                  box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
+  # Black outline only for "cert" points
+  geom_point(data = subset(boot_summary, high_cert_HD == "cert"),
+             aes(x = mean_length, y = mean_R.HD, 
+                 shape = factor(pd_detected), fill = mean_fem_prob_hd),
+             color = "grey30", stroke = 0.8, size = 2,  inherit.aes = FALSE) +
+  
+  scale_fill_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
+  scale_color_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
   scale_size(limits = c(size_min, size_max))+
   scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
-  geom_text_repel(aes(label = label_show,), 
-                  box.padding = 1, alpha = .8, max.overlaps = Inf, size =3)+
   theme_classic()+
   geom_text(data = whaling_lables_hd, aes(x = Length+0.1, label = label),
             y = 0.71,
@@ -596,19 +647,26 @@ p5  <- ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
   theme(legend.position = "null")
 
 
+
 p6<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+ 
   geom_line(data = mean_f_line_hf %>% filter(Length < 12), aes(x = Length, y = Ratio), 
-            linewidth = 1, alpha = 1, colour = "#344e37") +  # mean lines
+            linewidth = 1, alpha = 1, colour = "#2e3a29") +  # mean lines
   geom_line(data = mean_m_line_hf, aes(x = Length, y = Ratio), 
-            linewidth =1, alpha = 1, linetype = "dashed", colour = "#603b79") +  # mean lines
+            linewidth =1, alpha = 1, linetype = "dashed", colour = "#92cddb") +  # mean lines
   
-  geom_point(aes(fill = mean_fem_prob_hf, size = CI_width_HF, 
-                 shape = factor(pd_detected)), alpha = 0.9)+
-  geom_text_repel(aes(label = label_show,), 
-                  box.padding = 1, alpha = .8, max.overlaps = Inf, size =3)+
-  scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
-  scale_size(limits = c(size_min, size_max))+
+  geom_point(aes(colour = mean_fem_prob_hf, fill = mean_fem_prob_hf,
+                 shape = factor(pd_detected)), size = 2, alpha = 0.9) +
+  geom_text_repel(aes(label = label_show), 
+                  box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
+  # Black outline only for "cert" points
+  geom_point(data = subset(boot_summary, high_cert_HF == "cert"),
+             aes(x = mean_length, y = mean_R.HF, 
+                 shape = factor(pd_detected), fill = mean_fem_prob_hf),
+             color = "grey30", stroke = 0.8, size = 2,  inherit.aes = FALSE) +
+  
+  scale_fill_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
+  scale_color_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
   scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
   theme_classic()+
   geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
@@ -620,7 +678,7 @@ p6<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
        y = expression(NR[flipper]),      
        fill = "P(f)",
        size = "95% CI width",
-       shape = "PD observed")
+       shape = "PD observed")+guides(colure = "none")
 
 
 comb2 <- p5 + p6
@@ -629,11 +687,14 @@ comb2
 ggsave("Figures/bootstrap_post_prob_models_mean_curves.png",
        comb2, width = 9, height = 4)
 
+ggsave("Figures/bootstrap_post_prob_models_mean_curves_HF.png",
+       p6+labs(title = "")+guides(colour = "none"), width = 8, height = 4)
+
 
 # 6. visualize individual - level variations----
 boot_summary%>%
   ggplot(aes(x = mean_R.HD, y = mean_fem_prob_hd, colour = mean_fem_prob_hd))+
-  scale_color_wa_c("stuart", , limits = c(color_min, color_max)) +
+  scale_color_wa_c("diablo", , limits = c(color_min, color_max)) +
   geom_errorbar(aes(ymin = prob_hd_CI_low, ymax = prob_hd_CI_hi ))+
   geom_point(aes(shape = suckled_ever))+
   theme_classic()
@@ -641,7 +702,7 @@ boot_summary%>%
 
 boot_summary%>%
   ggplot(aes(x = mean_R.HF, y = mean_fem_prob_hf, colour = mean_fem_prob_hf))+
-  scale_color_wa_c("stuart", , limits = c(color_min, color_max)) +
+  scale_color_wa_c("diablo", , limits = c(color_min, color_max)) +
   geom_errorbar(aes(ymin = prob_hf_CI_low, ymax = prob_hf_CI_hi ))+
   geom_point(aes(shape = suckled_ever))+
   theme_classic()

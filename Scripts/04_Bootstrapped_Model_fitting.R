@@ -114,17 +114,21 @@ boot_summary<-all_boot %>%
   summarize(
     mean_length = mean(Length, na.rm = TRUE),
     length_CI_low = quantile(Length, 0.025, na.rm = TRUE), 
-    length_CI_hi = quantile(Length, 0.975, na.rm = TRUE),
+    length_CI_hi = quantile(Length, 0.975, na.rm = TRUE,),
+    sd_length = sd(Length, na.rm = T),
     
     mean_R.HD = mean(R.HD, na.rm = TRUE),
+    sd_R.HD = sd(R.HD, na.rm = T),
     R.HD_CI_low = quantile(R.HD, 0.025, na.rm = TRUE), 
     R.HD_CI_hi = quantile(R.HD, 0.975, na.rm = TRUE),
     
     mean_R.HF = mean(R.HF, na.rm = TRUE),
+    sd_R.HF = sd(R.HF, na.rm =  TRUE),
     R.HF_CI_low = quantile(R.HF, 0.025, na.rm = TRUE), 
     R.HF_CI_hi = quantile(R.HF, 0.975, na.rm = TRUE),
     
     mean_fem_prob_hd = mean(fem_prob_hd, na.rm = TRUE), 
+    sd_fem_prob_hd = sd(fem_prob_hd, na.rm = T),
     prob_hd_CI_low = unname(quantile(fem_prob_hd, 0.025, na.rm = TRUE)),
     prob_hd_CI_hi = unname(quantile(fem_prob_hd, 0.975, na.rm = TRUE)),
     
@@ -134,6 +138,7 @@ boot_summary<-all_boot %>%
     
     
     mean_fem_prob_hf = mean(fem_prob_hf, na.rm = TRUE), 
+    sd_fem_prob_hf = sd(fem_prob_hf, na.rm = T),
     prob_hf_CI_low = unname(quantile(fem_prob_hf, 0.025, na.rm = TRUE)),
     prob_hf_CI_hi = unname(quantile(fem_prob_hf, 0.975, na.rm = TRUE)),
     

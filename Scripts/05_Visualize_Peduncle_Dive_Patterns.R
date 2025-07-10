@@ -46,19 +46,29 @@ whaling_lables <- data.frame(
 
 #make a shape column:
 
+id.mean.p$HF_prob_CI_width<- id.mean.p$prob_hf_CI_hi - id.mean.p$prob_hf_CI_low
+
+id.mean.p$cert_HF <- ifelse(id.mean.p$HF_prob_CI_width<=0.05, "cert", "uncert")
+
 id.mean.p<- id.mean.p %>%
   mutate(point_shape = ifelse(is.na(mean_fem_prob_hf), "known","unknown"))
 
 p<- ggplot(id.mean.p, aes(x = factor(pd_detected), y = mean_TL))+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(aes(fill = mean_fem_prob_hf, shape = point_shape), width = 0.25, alpha = 0.8, size =2)+
+  geom_jitter(aes(fill = mean_fem_prob_hf, shape = point_shape, colour=mean_fem_prob_hf), 
+              width = 0.25, alpha = 0.8, size =2)+
+ # geom_jitter(data = subset(id.mean.p, cert_HF == "cert"),
+  #            aes(y = mean_TL, fill = mean_fem_prob_hf, shape = point_shape), 
+   #           colour = "gray30",
+    #          width = 0.25, alpha = 0.8, size =3)+
   scale_shape_manual(values = c("unknown" = 21, "known" = 8))+
-  scale_fill_wa_c("stuart", , limits = c(color_min, color_max)) +
+  scale_fill_wa_c("diablo", reverse = T, limits = c(color_min, color_max)) +
+  scale_color_wa_c("diablo", reverse = T, limits = c(color_min, color_max)) +
   geom_hline(yintercept = whaling_lables$Length, colour = "gray", linetype = "dashed")+
   geom_text(data = whaling_lables, aes(y = Length+0.15, x = 0.5, label = label),
             hjust = 0, size = 2.5, inherit.aes = F)+
   theme_classic()+
-  labs(x = "PD observed", y = "Length (m)", fill = "P(f)")
+  labs(x = "PD observed", y = "Length (m)", fill = "P(f)")+guides(colour = "none")
 
 p
 
