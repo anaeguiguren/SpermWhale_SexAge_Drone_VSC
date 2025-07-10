@@ -1,12 +1,13 @@
-# 4. Visualize -----
+#Visualize -----
 rm(list = ls())
 
 load("bootstrapped_estimates.RData")
+library(colorBlindness)
 source("Scripts/functions.R")
 library(wacolors)
 library(patchwork)
 
-# 1. Bootstrapped p_f for models based on HD and HF----
+
 #compute confidence interval width for (p(f)) and p(m)
 #female
 boot_summary$CI_width_HD <- boot_summary$prob_hd_CI_hi - boot_summary$prob_hd_CI_low
@@ -21,23 +22,11 @@ boot_summary$CI_width_HF_male <- boot_summary$m_prob_hf_CI_hi - boot_summary$m_p
 #save
 write.csv(boot_summary, "Data/Processed_Data/boot_summary_id.csv")
 
-#set scale limits so that same legend can be applied to both plots:
-# Color scales
-color_min <- min(boot_summary$mean_fem_prob_hd, boot_summary$mean_fem_prob_hf, na.rm = TRUE)
-color_max <- max(boot_summary$mean_fem_prob_hd, boot_summary$mean_fem_prob_hf, na.rm = TRUE)
-
-# size scales
-size_min <- min(boot_summary$CI_width_HD, boot_summary$CI_width_HF, na.rm = TRUE)
-size_max <- max(boot_summary$CI_width_HD, boot_summary$CI_width_HF, na.rm = TRUE)
-
-# make plots:
-
-
 # add whaling references
 
 whaling_lables_hd <- data.frame(
   Length = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), 
-  Ratio = 0.78, 
+  Ratio = 0.74, 
   label = c("C", "J", "SA", "AF", "AM/MF", "Fmax","MM")
 )
 
@@ -67,6 +56,90 @@ boot_summary<- boot_summary %>%
                               ifelse(suckled_ever == TRUE, "receiving", "no")))
 
 
+
+
+# 1. Bootstrapped length and NR ratios -----
+
+#set scale limits so that same legend can be applied to both plots:
+# Color scales
+color_min <- min(boot_summary$mean_fem_prob_hd, boot_summary$mean_fem_prob_hf, na.rm = TRUE)
+color_max <- max(boot_summary$mean_fem_prob_hd, boot_summary$mean_fem_prob_hf, na.rm = TRUE)
+
+# size scales
+size_min <- min(boot_summary$CI_width_HD, boot_summary$CI_width_HF, na.rm = TRUE)
+size_max <- max(boot_summary$CI_width_HD, boot_summary$CI_width_HF, na.rm = TRUE)
+
+#~~~i. general summaries----
+
+boot_summary$length_CI_width <- boot_summary$length_CI_hi- boot_summary$length_CI_low
+hist(boot_summary$length_CI_width, breaks = 20)
+mean(boot_summary$length_CI_width)
+median(boot_summary$length_CI_width)
+sd(boot_summary$length_CI_width)
+
+plot(boot_summary$mean_length, boot_summary$length_CI_width)
+plot(boot_summary$mean_length, boot_summary$length_CI_width/boot_summary$mean_length)
+hist(boot_summary$length_CI_width/boot_summary$mean_length*100, breaks = 20)
+
+median(boot_summary$length_CI_width/boot_summary$mean_length*100)
+mean(boot_summary$length_CI_width/boot_summary$mean_length*100)
+sd(boot_summary$length_CI_width/boot_summary$mean_length*100)
+
+
+#~~~ii. plots----
+
+# make plots:
+
+
+p0a<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
+
+  geom_pointrange(aes(ymin = R.HD_CI_low, ymax = R.HD_CI_hi), 
+                  alpha = 0.7, size = 0.2)+
+  geom_linerange(aes(xmin = length_CI_low, xmax = length_CI_hi), alpha = 0.7)+
+  theme_classic()+
+  geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
+            y = 0.728,
+            hjust = 0, size = 2.5, inherit.aes = F)+
+  labs(title = "a)",
+       x = "Length (m)",
+       y = expression(NR[dorsal]),      
+       fill = "P(f)",
+       size = "95%CI width",
+       shape = "Suckled")+
+  theme(legend.position = "null")
+
+
+
+p0b<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
+  
+  geom_pointrange(aes(ymin = R.HF_CI_low, ymax = R.HF_CI_hi), 
+                  alpha = 0.7, size =0.2)+
+  geom_linerange(aes(xmin = length_CI_low, xmax = length_CI_hi), alpha = 0.7)+
+  theme_classic()+
+  geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
+            y = 0.425,
+            hjust = 0, size = 2.5, inherit.aes = F)+
+  labs(title = "b)",
+       x = "Length (m)",
+       y = expression(NR[flipper]),      
+       fill = "P(f)",
+       size = "95%CI width",
+       shape = "Suckled")+
+  theme(legend.position = "null")
+
+
+comb0 <- p0a + p0b
+comb0
+
+ggsave("Figures/bootstrap_length_NRS.png",
+       comb0, width = 9, height = 4)
+
+ggsave("Figures/bootstrap_length_NR_flipper.png",
+       p0b, width = 9, height = 5)
+
+# 2. Bootstrapped p_f for models based on HD and HF----
 #~~~~i. plot ----
 library(ggrepel)
   

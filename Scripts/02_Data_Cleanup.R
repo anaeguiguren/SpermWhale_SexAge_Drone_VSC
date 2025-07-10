@@ -198,14 +198,15 @@ library(wacolors)
 
 # Create boxplot with significance indicators
 # this makes sense to do median for each snapshot
-
+library(RColorBrewer)
 morpho.output<-morpho.output%>%
   mutate(idable = ifelse(as.numeric(Q)<3, "no", "yes"))
 
 
 p1<- ggplot(morpho.output, aes(x = as.factor(Q), y = altitude.c, fill = idable)) +
   geom_boxplot() +
-  scale_fill_wa_d("coast")+
+  #scale_fill_wa_d("coast")+
+  scale_fill_grey(start = 0.8, end = 0.3)+
   geom_hline(yintercept = 70, lty = "dashed")+
   labs(x = "Q rating", y = "Corrected altitude (m)", fill = "ID possible")+
   theme_classic() +
