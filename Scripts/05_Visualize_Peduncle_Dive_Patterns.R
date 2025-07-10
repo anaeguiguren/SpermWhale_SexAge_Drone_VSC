@@ -62,8 +62,8 @@ p<- ggplot(id.mean.p, aes(x = factor(pd_detected), y = mean_TL))+
    #           colour = "gray30",
     #          width = 0.25, alpha = 0.8, size =3)+
   scale_shape_manual(values = c("unknown" = 21, "known" = 8))+
-  scale_fill_wa_c("diablo", reverse = T, limits = c(color_min, color_max)) +
-  scale_color_wa_c("diablo", reverse = T, limits = c(color_min, color_max)) +
+  scale_fill_wa_c("puget", reverse = T, limits = c(color_min, color_max)) +
+  scale_color_wa_c("puget", reverse = T, limits = c(color_min, color_max)) +
   geom_hline(yintercept = whaling_lables$Length, colour = "gray", linetype = "dashed")+
   geom_text(data = whaling_lables, aes(y = Length+0.15, x = 0.5, label = label),
             hjust = 0, size = 2.5, inherit.aes = F)+

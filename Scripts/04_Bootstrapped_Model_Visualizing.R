@@ -164,7 +164,7 @@ ggsave("Figures/bootstrap_length_NRS.png",
        comb0, width = 9, height = 4)
 
 ggsave("Figures/bootstrap_length_NR_flipper.png",
-       p0b, width = 9, height = 5)
+       p0b+labs(title = ""), width =7 , height = 4)
 
 # 2. Bootstrapped p_f for models based on HD and HF----
 #~~~~i. plot ----
@@ -184,11 +184,11 @@ p1 <- ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD)) +
   geom_point(data = subset(boot_summary, high_cert_HD == "cert"),
              aes(x = mean_length, y = mean_R.HD, 
                  shape = factor(pd_detected)),
-             color = "black", stroke = 0.8, size = 2, fill = NA, inherit.aes = FALSE) +
+             color = "black", stroke = 1, size = 2, fill = NA, inherit.aes = FALSE) +
   geom_text_repel(aes(label = label_show), 
                   box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
-  scale_fill_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
-  scale_color_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
+  scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
+  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
   scale_size(limits = c(size_min, size_max)) +
   scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22)) +
   theme_classic() +
@@ -207,14 +207,14 @@ p2 <- ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF)) +
   geom_point(aes(colour = mean_fem_prob_hf, fill = mean_fem_prob_hf,
                  shape = factor(pd_detected)), size = 2, alpha = 0.9) +
   # Black outline only for "cert" points
-  geom_point(data = subset(boot_summary, high_cert == "cert"),
+  geom_point(data = subset(boot_summary, high_cert_HF == "cert"),
              aes(x = mean_length, y = mean_R.HF, 
                  shape = factor(pd_detected)),
-             color = "black", stroke = 0.8, size = 2, fill = NA, inherit.aes = FALSE) +
+             color = "black", stroke = 1, size = 2, fill = NA, inherit.aes = FALSE) +
   geom_text_repel(aes(label = label_show), 
                   box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
-  scale_fill_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
-  scale_color_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
+  scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
+  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
   scale_size(limits = c(size_min, size_max)) +
   scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22)) +
   theme_classic() +
@@ -561,18 +561,18 @@ mean_lines_hf <- rbind(mean_f_line_hf, mean_m_line_hf)
 p3<-ggplot(all_lines_hd, aes(x = Length, y = Ratio, 
                          group = interaction(Bootstrap, Sex),
                          colour = Sex))+
-  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
-  geom_line(alpha = 0.05, linewidth = 0.5)+
+  #geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
+  geom_vline(xintercept = 6, alpha = 0.3)+  geom_line(alpha = 0.05, linewidth = 0.5)+
   geom_line(data = mean_f_line_hd, aes(x = Length, y = Ratio, colour = Sex), 
-            linewidth = 1, alpha = 0.6) +  # mean lines
+            linewidth = 1, alpha = 1) +  # mean lines
   geom_line(data = mean_m_line_hd, aes(x = Length, y = Ratio, colour = Sex), 
-            linewidth =1, alpha = 0.6, linetype = "dashed") +  # mean lines
-  scale_color_manual(values = c("F" = "#2e3a29", "M" = "#92cddb", 
-                                "Fem" = "#899e80", "Mal" = "#cee3e8"))+
+            linewidth =1, alpha = 1, linetype = "dashed") +  # mean lines
+  scale_color_manual(values = c("F" = "#123c2e", "M" = "#eba8ad", 
+                                "Fem" = "#b8c5c0", "Mal" = "#f9e5e6"))+
   scale_y_continuous(limits = c(0.56, 0.74))+
-  geom_text(data = whaling_lables_hd, aes(x = Length+0.1,label = label),
-            y =0.745,
-            hjust = 0, size = 2.5, inherit.aes = F)+
+  #geom_text(data = whaling_lables_hd, aes(x = Length+0.1,label = label),
+  #          y =0.745,
+  #          hjust = 0, size = 2.5, inherit.aes = F)+
   theme_classic()+
   labs(x = "Length (m)", y = expression(NR[dorsal]), title = "a)")+
   theme(legend.position = "null")
@@ -582,33 +582,35 @@ p3
 p4<-ggplot(all_lines_hf, aes(x = Length, y = Ratio, 
                              group = interaction(Bootstrap, Sex),
                              colour = Sex))+
-  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
+  #geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
+  geom_vline(xintercept = 6, alpha = 0.3)+
   geom_line(alpha = 0.05, linewidth = 0.5)+
   geom_line(data = mean_f_line_hf, aes(x = Length, y = Ratio, colour = Sex), 
-            linewidth = 1, alpha = 0.6) +  # mean lines
+            linewidth = 1, alpha = 1) +  # mean lines
   geom_line(data = mean_m_line_hf, aes(x = Length, y = Ratio, colour = Sex), 
-            linewidth =1, alpha = 0.6, linetype = "dashed") +  # mean lines
+            linewidth =1, alpha = 1 ,linetype = "dashed") +  # mean lines
 
-  scale_color_manual(values = c("F" = "#2e3a29", "M" = "#92cddb", 
-                                "Fem" = "#899e80", "Mal" = "#cee3e8"))+
+  scale_color_manual(values = c("F" = "#123c2e", "M" = "#eba8ad", 
+                                "Fem" = "#b8c5c0", "Mal" = "#f9e5e6"))+
   scale_y_continuous(limits = c(0.24, 0.42))+
-  geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
-            y = 0.425,
-            hjust = 0, size = 2.5, inherit.aes = F)+
+  #geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
+  #          y = 0.425,
+  #          hjust = 0, size = 2.5, inherit.aes = F)+
   theme_classic()+
-  labs(x = "Length (m)", y = expression(NR[flipper]), title = "b)", 
-       colour = "Sex")
+  labs(x = "Length (m)", y = expression(NR[flipper]), title = "b)")+
+  guides(colour = "none")
  
 
 curves <- p3 + p4
 
-#curves
+curves
 ggsave("Figures/bootstrap_params_curves.png",
        curves, width = 8, height = 4)
 
-ggsave("Figures/bootstrap_params_curves.png",
-       curves, width = 8, height = 4)
-
+ggsave("Figures/bootstrap_params_curves_HF.png",
+       p4+labs(title = ""), width = 7, height = 4)
+ggsave("Figures/bootstrap_params_curves_HD.png",
+       p3+labs(title = ""), width = 7, height = 4)
 
 # 7. Bootstrapped p(f) + mean curves----
 
@@ -616,21 +618,21 @@ ggsave("Figures/bootstrap_params_curves.png",
 p5  <-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
   geom_line(data = mean_f_line_hd %>% filter(Length < 12), aes(x = Length, y = Ratio), 
-            linewidth = 1, alpha = 1, colour = "#2e3a29") +  # mean lines
+            linewidth = 1, alpha = 1, colour = "#123c2e") +  # mean lines
   geom_line(data = mean_m_line_hd, aes(x = Length, y = Ratio), 
-            linewidth =1, alpha = 1, linetype = "dashed", colour = "#92cddb") +  # mean lines
+            linewidth =1, alpha = 1, linetype = "dashed", colour = "#eba8ad") +  # mean lines
   geom_point(aes(colour = mean_fem_prob_hd, fill = mean_fem_prob_hd,
-                 shape = factor(pd_detected)), size = 2, alpha = 0.9) +
+                 shape = factor(pd_detected)), size = 2, alpha = 0.8) +
   geom_text_repel(aes(label = label_show), 
                   box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
   # Black outline only for "cert" points
   geom_point(data = subset(boot_summary, high_cert_HD == "cert"),
              aes(x = mean_length, y = mean_R.HD, 
-                 shape = factor(pd_detected), fill = mean_fem_prob_hd),
-             color = "grey30", stroke = 0.8, size = 2,  inherit.aes = FALSE) +
+                 shape = factor(pd_detected), fill = NULL),
+             color = "black", stroke = 1, size = 2,  inherit.aes = FALSE) +
   
-  scale_fill_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
-  scale_color_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
+  scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
+  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
   scale_size(limits = c(size_min, size_max))+
   scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
   theme_classic()+
@@ -651,22 +653,22 @@ p5  <-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
 p6<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+ 
   geom_line(data = mean_f_line_hf %>% filter(Length < 12), aes(x = Length, y = Ratio), 
-            linewidth = 1, alpha = 1, colour = "#2e3a29") +  # mean lines
+            linewidth = 1, alpha = 1, colour = "#123c2e") +  # mean lines
   geom_line(data = mean_m_line_hf, aes(x = Length, y = Ratio), 
-            linewidth =1, alpha = 1, linetype = "dashed", colour = "#92cddb") +  # mean lines
+            linewidth =1, alpha = 1, linetype = "dashed", colour = "#eba8ad") +  # mean lines
   
   geom_point(aes(colour = mean_fem_prob_hf, fill = mean_fem_prob_hf,
-                 shape = factor(pd_detected)), size = 2, alpha = 0.9) +
+                 shape = factor(pd_detected)), size = 2, alpha = 0.8) +
   geom_text_repel(aes(label = label_show), 
                   box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
   # Black outline only for "cert" points
   geom_point(data = subset(boot_summary, high_cert_HF == "cert"),
              aes(x = mean_length, y = mean_R.HF, 
-                 shape = factor(pd_detected), fill = mean_fem_prob_hf),
-             color = "grey30", stroke = 0.8, size = 2,  inherit.aes = FALSE) +
+                 shape = factor(pd_detected), fill = NULL),
+             color = "black", stroke = 1, size = 2,  inherit.aes = FALSE) +
   
-  scale_fill_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
-  scale_color_wa_c("diablo", limits = c(color_min, color_max), reverse = T) +
+  scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
+  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
   scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
   theme_classic()+
   geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
@@ -678,7 +680,7 @@ p6<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
        y = expression(NR[flipper]),      
        fill = "P(f)",
        size = "95% CI width",
-       shape = "PD observed")+guides(colure = "none")
+       shape = "PD observed")+ guides(colour = "none")
 
 
 comb2 <- p5 + p6
@@ -687,23 +689,41 @@ comb2
 ggsave("Figures/bootstrap_post_prob_models_mean_curves.png",
        comb2, width = 9, height = 4)
 
+
+ggsave("Figures/bootstrap_post_prob_models_mean_curves_HD.png",
+       p5+labs(title = "")+guides(colour = "none"), width = 7, height = 4)
+
+
 ggsave("Figures/bootstrap_post_prob_models_mean_curves_HF.png",
-       p6+labs(title = "")+guides(colour = "none"), width = 8, height = 4)
+       p6+labs(title = "")+guides(colour = "none"), width = 7, height = 4)
+
+
+
+# HF. Only plots-----
+comb3 <- (p4+labs(title = "a)")) / p6
+
+ggsave("Figures/bootstrap_post_prob_models_mean_curves_HF_2panel.png", 
+       comb3, width = 8, height = 8)
+
 
 
 # 6. visualize individual - level variations----
 boot_summary%>%
-  ggplot(aes(x = mean_R.HD, y = mean_fem_prob_hd, colour = mean_fem_prob_hd))+
-  scale_color_wa_c("diablo", , limits = c(color_min, color_max)) +
+  arrange(mean_fem_prob_hd)%>%
+  mutate(ind = seq_along(ID))%>%
+  ggplot(aes(x = ind, y = mean_fem_prob_hd, colour = mean_fem_prob_hd))+
+  scale_color_wa_c("puget", , limits = c(color_min, color_max)) +
   geom_errorbar(aes(ymin = prob_hd_CI_low, ymax = prob_hd_CI_hi ))+
-  geom_point(aes(shape = suckled_ever))+
+  geom_point()+
   theme_classic()
 
 
 boot_summary%>%
-  ggplot(aes(x = mean_R.HF, y = mean_fem_prob_hf, colour = mean_fem_prob_hf))+
-  scale_color_wa_c("diablo", , limits = c(color_min, color_max)) +
+  arrange(mean_fem_prob_hf)%>%
+  mutate(ind = seq_along(ID))%>%
+  ggplot(aes(x = ind, y = mean_fem_prob_hf, colour = mean_fem_prob_hf))+
+  scale_color_wa_c("puget", , limits = c(color_min, color_max)) +
   geom_errorbar(aes(ymin = prob_hf_CI_low, ymax = prob_hf_CI_hi ))+
-  geom_point(aes(shape = suckled_ever))+
+  geom_point()+
   theme_classic()
 
