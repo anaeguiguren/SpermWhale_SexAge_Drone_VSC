@@ -113,7 +113,7 @@ sd(boot_summary$CI_width_R.HF)
 
 
 
-#~~~ii. plots----
+#~~~ii. TL vs NR plots----
 
 # make plots:
 
@@ -165,6 +165,80 @@ ggsave("Figures/bootstrap_length_NRS.png",
 
 ggsave("Figures/bootstrap_length_NR_flipper.png",
        p0b+labs(title = ""), width =7 , height = 4)
+
+
+#~~~iii. NR variability plots----
+
+
+boot_summary$CI_width_R.HD
+boot_summary$CI_width_R.HF
+
+#make centered values:
+centered_df<-boot_summary%>%
+  arrange(mean_R.HD)%>%
+  mutate(ind = seq_along(ID),
+         mean_R.HD.center = mean_R.HD - mean(mean_R.HD), #center NR values around their mean
+         R.HD_CI_low.center = R.HD_CI_low - mean_R.HD,
+         R.HD_CI_hi.center = R.HD_CI_hi- mean_R.HD,
+         R.HD.CI_width = unname(R.HD_CI_hi-R.HD_CI_low),
+         
+         mean_R.HF.center = mean_R.HF - mean(mean_R.HF),
+         R.HF_CI_low.center = R.HF_CI_low- (mean_R.HF),
+         R.HF_CI_hi.center = R.HF_CI_hi - (mean_R.HF),
+         R.HF.CI_width = unname(R.HF_CI_hi - R.HF_CI_low)
+         
+         
+         )
+
+
+#how many are wider: 
+centered_df$R.HD.CI_width
+
+
+centered_df %>%
+  mutate(R.HD_wider = ifelse(
+    R.HD.CI_width > R.HF.CI_width, "yes", "no"
+  ))%>%
+  group_by(R.HD_wider)%>%
+  summarize(n = n())
+
+
+
+#make convert to long form:
+hd_long<-centered_df %>%
+  select(ind, mean_length, mean = mean_R.HD.center, low = R.HD_CI_low.center, hi = R.HD_CI_hi.center)%>%
+  mutate(Measure = "NRdorsal")
+
+
+hf_long<-centered_df %>%
+  select(ind, mean_length, mean = mean_R.HF.center, low = R.HF_CI_low.center, hi = R.HF_CI_hi.center)%>%
+  mutate(Measure = "NRflipper")
+
+
+#combine:
+long_centered <- bind_rows(hd_long, hf_long)
+
+
+ci.w<-long_centered %>%
+  mutate(width = hi - low) %>%
+  ggplot(aes(x = Measure, y = width)) +
+  geom_boxplot(alpha = 0.6) +
+  scale_x_discrete(
+    labels = c(
+      "NRflipper" = expression(NR[flipper]), 
+      "NRdorsal" = expression(NR[dorsal])
+    )
+  )+
+  geom_jitter(width = 0.1, alpha = 0.4) +
+  scale_fill_grey(start = 0.3, end = 0.7) +
+  labs(y = "95% Confidence interval width", x = "") +
+  theme_bw()
+
+ggsave("Figures/boxplot_NR_CI_Widths_supplementary.png",
+       ci.w, width = 5, height = 5)
+
+ci.w<-long_centered %>%
+  mutate(width = hi - low)
 
 # 2. Bootstrapped p_f for models based on HD and HF----
 #~~~~i. plot ----
@@ -301,7 +375,27 @@ param_plot
 ggsave("Figures/bootstrap_params_models.png",
        param_plot, width = 7, height = 3.5)
 
+#nrflipper only 
 
+
+param_lables <- c("A. maxf", "B. fr", "C. maxm", "D. mr")
+
+hf_param_plot <- hf_params %>%
+  ggplot(aes(x = parameters, y = estimate)) +
+  geom_boxplot(alpha = 0.8) +
+  facet_wrap(~parameters, scales = "free", ncol = 4) +
+  labs(y = "Estimate", x = "Parameter") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(), 
+        legend.position = "none", 
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())  
+
+
+
+ggsave("Figures/bootstrap_params_models_HF.png",
+       hf_param_plot, width = 7, height = 3.5)
 
 
 #~~~~b. table----
