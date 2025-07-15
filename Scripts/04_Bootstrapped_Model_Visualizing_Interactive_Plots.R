@@ -9,6 +9,7 @@ p2.y <- ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF, fill = mean_fem
     size = CI_width_HF,
     shape = factor(suckled_ever),
     text = paste0(
+      "ID: ", ID,
       "Length: ", round(mean_length, 2), " m",
       "<br>Ratio: ", round(mean_R.HF, 3),
       "<br>P(fem): ", round(mean_fem_prob_hf, 2),
