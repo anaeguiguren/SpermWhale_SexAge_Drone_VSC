@@ -167,8 +167,8 @@ id.mean <- id.morph %>%
   summarize(mean_TL = mean(TL.m, na.rm = T), cv_TL = (sd(TL.m, na.rm = T)/mean_TL)*100, sd_TL = sd(TL.m, na.rm = T),
             mean_HD = mean(HD.m, na.rm = T), cv_HD = (sd(HD.m, na.rm = T)/mean_HD)*100, sd_HD = sd(HD.m, na.rm = T),
             mean_HF = mean(HF.m, na.rm = T), cv_HF = (sd(HF.m, na.rm = T)/mean_HF)*100, sd_HF = sd(HD.m, na.rm = T),
-            mean_ratio.HD = mean(ratio.HD, na.rm = T), cv_ratio.HD = (sd(ratio.HD, na.rm = T)/mean_ratio.HD), sd_ratio.HD = sd(ratio.HD, na.rm = T),
-            mean_ratio.HF = mean(ratio.HF, na.rm = T), cv_ratio.HF = (sd(ratio.HF, na.rm = T)/mean_ratio.HF), sd_ratio.HF = sd(ratio.HF, na.rm = T),
+            mean_ratio.HD = mean(ratio.HD, na.rm = T), cv_ratio.HD = (sd(ratio.HD, na.rm = T)/mean_ratio.HD)*100, sd_ratio.HD = sd(ratio.HD, na.rm = T),
+            mean_ratio.HF = mean(ratio.HF, na.rm = T), cv_ratio.HF = (sd(ratio.HF, na.rm = T)/mean_ratio.HF)*100, sd_ratio.HF = sd(ratio.HF, na.rm = T),
             n_photos = n(),
             date = first(date),
             mean_altitude= mean(altitude.c), 
@@ -184,8 +184,17 @@ hd<-id.mean%>%
 
 
 hf<-id.mean%>%
-  filter(n_photos>2 & !is.na(mean_HF))
+  filter(n_photos>2 & !is.na(cv_ratio.HF))
 
+
+hf %>%
+  summarize(
+    n_photo_mean = mean(n_photos),
+    cv_length_mean = mean(cv_TL), 
+    sd_length_mean = sd(cv_TL), 
+    cv_ratio.HF_mean = mean(cv_ratio.HF),
+    cv_ratio.HD_mean = mean(cv_ratio.HD)
+  )
 
 #save
 write.csv(id.mean, "Data/Processed_Data/id_morpho_output_clean_processed.csv")

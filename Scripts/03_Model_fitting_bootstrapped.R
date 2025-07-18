@@ -29,7 +29,12 @@ dat_HF <- clean_data %>%
   filter(n_photos > 2 & !is.na(R_sd))
 dim(dat_HF)
 
+
+
 #check:
+#summarize raw CVs:
+
+
 
 # 3. HD model - observed ----
 
