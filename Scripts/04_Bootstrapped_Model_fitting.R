@@ -168,4 +168,5 @@ names(hd_params_hf) <- c("fr", "fmax", "mr", "mmax")
 
 
 save.image(file = "bootstrapped_estimates.RData")
+load("bootstrapped_estimates.RData")
 

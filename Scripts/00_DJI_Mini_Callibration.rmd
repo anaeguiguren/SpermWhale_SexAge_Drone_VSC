@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, include = FALSE}
-setwd("C:/Users/balae/Documents/SpermWhale_SexAge_Drone_VSC")
+#setwd("/Documents/SpermWhale_SexAge_Drone_VSC")
 
 source("Scripts/00_DJI_Mini_Callibration_Data_Prep.R")
 library(ggplot2)
@@ -114,7 +114,12 @@ mean(dat$error)
 sd(dat$error)
 ```
 
-
+Which correspond to the following percentages:
+```{r}
+dat$error <- dat$bal.length-12.03
+mean(dat$error/12.03)*100
+sd(dat$error/12.03)*100
+```
 
 ## Questions
 
@@ -284,11 +289,11 @@ Which looks like error is proportional, more than an added constant
 
 ```{r}
 mean(dat$altitude.err.p)
+sd(dat$altitude.err.p)
 quantile(dat$altitude.err.p, probs = c(0.025, 0.975))
-
-
-
 ```
+
+
 
 So if I add the result from the gls non.hierarchical model:
 
@@ -304,6 +309,20 @@ quantile(dat$bal.length.c-12.03, probs = c(0.05, 0.5, 0.95))
 quantile(dat$bal.length.c, probs = c(0.0975)) - quantile(dat$bal.length.c, probs = c(0.025))
 
 ```
+
+inspect the mean and spread of corrected altitude measurements error
+
+
+```{r}
+
+dat$altitude.corr.err <- dat$altitude.corr - dat$true.altitude
+mean(dat$altitude.corr.err)
+sd(dat$altitude.corr.err)
+quantile(dat$altitude.corr.err, probs = c(0.025, 0.975))
+```
+
+
+
 
 ```{r}
 hist(dat$bal.length.c, breaks = 30, main = "", xlab = "estimated length")
@@ -348,7 +367,12 @@ This looks pretty reasonable!
 What is the 95% confidence interval:
 
 ```{r}
-quantile(dat$length.error.c.p, probs=c(0.05, 0.95))
+mean(dat$length.error.c)
+sd(dat$length.error.c)
+
+quantile(dat$length.error.c, probs=c(0.05, 0.95))
+
+
 ```
 
 
