@@ -222,14 +222,49 @@ summary(m.rand) # AIC = 1389.933 BIC = 1405.284	- probably yes?
 ```
 
 
-Compare across models:
+Compare across models (altitude):
 
 ```{r}
 dat$fit.nh <- fitted(m.nh) #non-hierarchical
 dat$fit.rand.int <- fitted(m.rand.int) #random intercepts
 dat$fit.rand <- fitted(m.rand) # random slopes
 
-#compare errors from three models
+# error estimates
+dat$altitude.err.nh <- dat$fit.nh - dat$true.altitude
+dat$altitude.err.rand.int <- dat$fit.rand.int - dat$true.altitude
+dat$altitude.err.rand <- dat$fit.rand - dat$true.altitude
+
+
+
+
+
+
+dat_long.alt <- dat %>%
+  pivot_longer(
+    cols = starts_with("altitude.err"), 
+    names_to = "correction_type", 
+    values_to = "altitude_error"
+  )
+
+dat_long.alt.summary<-dat_long.alt %>%
+  group_by(correction_type)%>%
+  summarise(mean_err = mean(altitude_error), 
+            sd_err = sd(altitude_error),
+            ci_lo = unname(quantile(altitude_error, probs = 0.025)),
+            ci_hi = unname(quantile(altitude_error, probs = 0.095)), 
+            ci_width = ci_hi- ci_lo)%>%
+  filter(correction_type!="altitude.err.p")
+
+write.csv(dat_long.alt.summary,"/Users/anacristinaeguigurenburneo/Documents/SpermWhale_SexAge_Drone_VSC/Data/Processed_Data/Altitude_error_correction_summary.csv")
+
+```
+
+
+
+
+
+```{r}
+#compare measurement errors from three models
 dat$length.corrected.nh<- morpho.length.alpha(altitude =dat$fit.nh,
                                       image.width = dat$imageWidth,
                                       length.pixels = dat$pixel.length)
@@ -264,16 +299,31 @@ dat_long <- dat %>%
 ```
 
 ```{r}
+dat_long.err.summary<- dat_long %>%
+  group_by(correction_type)%>%
+  summarise(mean_err = mean(error), 
+            mean_err= mean(error), 
+            quant_025 = quantile(error, probs = 0.025), 
+            quant_975 = quantile(error, probs = 0.975),
+            ic_range = quant_975-quant_025, 
+            sd = sd(error))
+
+write.csv(dat_long.err.summary, "/Users/anacristinaeguigurenburneo/Documents/SpermWhale_SexAge_Drone_VSC/Data/Processed_Data/Measurement_error_correction_summary.csv")
+
+```
+
+
+
+```{r}
 dat_long %>%
   group_by(correction_type)%>%
   summarise(mean_err = mean(error), 
-            mean_err_p = mean(error_p), 
+            mean_err_p = mean(error_), 
             quant_5 = quantile(error_p, probs = 0.025), 
             quant_95 = quantile(error_p, probs = 0.975),
             ic_range = quant_95-quant_5, 
             sd = sd(error_p))
 ```
-
 How does **percent** error compare to altitude?
 
 ```{r}
