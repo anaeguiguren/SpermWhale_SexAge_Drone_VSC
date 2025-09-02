@@ -105,15 +105,37 @@ ggplot(all_sim, aes(x= reorder(ID, Length), y = fem_prob_hf))+
 
 p1<-ggplot(all_sim, aes(x= chm, y = fem_prob_hf, group = ID))+
   geom_line(aes(colour = Length), alpha = 0.8)+
-  scale_colour_viridis_c(option="plasma") + 
-  labs(x = "chm (m)",
+  scale_colour_viridis_c() + 
+  labs(x = "Divergence length (chm - m)",
        y = "P(f)",      
        colour = "Length (m)")+
-  geom_vline(xintercept  = 6, colour = "gray",lty =2)+
+  geom_vline(xintercept  = 6, colour = "gray",lty =3)+
   theme_classic()
 
 p1
 
 
 ggsave("Figures/appendix_effect_of_chm_on_fprob.png",
-       p1, width = 9, height = 4)
+       p1, width = 6, height = 3)
+
+#a plot showing individual variation in chm between 5 - 7 m
+
+p2 <- all_sim %>%
+  filter(chm<=7) %>%
+  ggplot(aes(x=reorder(ID, fem_prob_hf), y = fem_prob_hf))+
+  geom_boxplot()+
+  geom_jitter(aes(colour = chm),width = 0.1, alpha = 0.5)+
+  labs(x = "ID",
+       y = "P(f)",      
+       colour = "chm (m)")+
+  theme_classic()+
+  theme(axis.text.x = element_text(
+    angle = 90, vjust = 0.5, hjust = 1
+  ))
+
+p2
+
+
+ggsave("Figures/appendix_effect_of_chm_on_fprob_boxplots.png",
+       p2, width = 9, height = 5)
+
