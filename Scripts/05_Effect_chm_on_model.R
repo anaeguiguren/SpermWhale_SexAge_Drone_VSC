@@ -36,6 +36,7 @@ dat_HF_mean <- dat_HF%>%
             suckling_ever = first(suckling_ever))
 
 
+
 # 2. Run model with different chm values -----
 chm_range <- seq(5, 9, length.out =50)
 
@@ -89,17 +90,9 @@ for(i in 1:n_sim){
 
 
 
-# 3. Get average and CI estimates-----
 
 #individual measurements:
-all_sim <- bind_rows(dat_sim, .id = "bootstrap")
-
-
-
-
-ggplot(all_sim, aes(x= reorder(ID, Length), y = fem_prob_hf))+
-  geom_point(aes(colour = chm), alpha = 0.5, size = 3)+
-  theme(axis.text.x = element_text(angle=90, hjust =1))
+all_sim <- bind_rows(dat_sim, .id = "sim")
 
 
 
@@ -138,4 +131,62 @@ p2
 
 ggsave("Figures/appendix_effect_of_chm_on_fprob_boxplots.png",
        p2, width = 9, height = 5)
+
+
+
+# get boot_summary data
+
+load("bootstrapped_estimates.RData")
+head(all_sim)
+
+
+chm_sim_summary<-all_sim%>%
+  filter(chm<=7)%>%
+  group_by(ID)%>%
+  summarize(femp_prob_range = max(fem_prob_hf)- min(fem_prob_hf))
+
+
+
+chm_sim_summary<-left_join(chm_sim_summary, boot_summary, by = "ID")
+
+chm_sim_summary <- chm_sim_summary %>%
+  mutate(CI_width = prob_hf_CI_hi- prob_hf_CI_low, 
+         high_range = ifelse(femp_prob_range>0.05, "high", "low"))
+
+
+chm_sim_summary<-chm_sim_summary%>%
+  mutate(short_ID = substr(ID, 10, 11), 
+       label_show =
+         ifelse(femp_prob_range>0.05,
+                short_ID, 
+                ""))
+
+
+#make subset of data with values highe
+color_min <- min(boot_summary$mean_fem_prob_hd, boot_summary$mean_fem_prob_hf, na.rm = TRUE)
+color_max <- max(boot_summary$mean_fem_prob_hd, boot_summary$mean_fem_prob_hf, na.rm = TRUE)
+
+
+p3<-ggplot(chm_sim_summary, aes(x = femp_prob_range, y = CI_width, colour = mean_fem_prob_hf))+
+  geom_point(alpha = 0.7, size = 3)+
+  geom_text(aes(label = label_show), 
+            hjust = 0, nudge_x = 0.005)+
+  geom_vline(xintercept = 0.05, lty = 2, col = "gray")+
+  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
+  theme_classic()+
+  labs(x = "P(f) range accross chm values",
+       y = "P(f) bootsrapped 95% CI widths",      
+       colour = "P(f)")+
+  theme_classic()
+
+
+
+
+ggsave("Figures/appendix_effect_of_chm_on_fprob_ciwidth.png",
+       p3, width = 5, height = 4)
+
+# 2. Run model with different prior pf values -----
+
+
+
 
