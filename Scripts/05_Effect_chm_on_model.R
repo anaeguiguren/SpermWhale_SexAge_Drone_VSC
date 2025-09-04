@@ -1,6 +1,5 @@
-#04_Bootstrapped_HF_Model_Fitting
-# Growth Curve Parameter Optimization
-# Load necessary libraries and functions
+#05_Robustness Checks
+# Check effects of varying chm and prior p(f) on posterior p(f) estimates
 source("Scripts/functions.R")
 library(patchwork)
 library(wacolors)
@@ -181,12 +180,92 @@ p3<-ggplot(chm_sim_summary, aes(x = femp_prob_range, y = CI_width, colour = mean
 
 
 
+p3
 
 ggsave("Figures/appendix_effect_of_chm_on_fprob_ciwidth.png",
        p3, width = 5, height = 4)
 
-# 2. Run model with different prior pf values -----
+# 3. Run model with different prior pf values -----
 
 
 
+#create new function that allows for priors to be modified:
 
+f_probs_informed  <- function(params, data, prior_f = 0.5, chm = 6) {
+  prior_m <- 1 - prior_f
+  res <- sumsq(params, data, chm)
+  likes <- exp(-res$likes / (2 * res$ss / (nrow(res$likes) - 1)))
+  post_probs <- (likes[, 1] * prior_f) / (likes[, 1]* prior_f + likes[,2] * prior_m)
+  return(post_probs)
+}
+
+
+# run optimizing model 
+  
+hf.temp <- optim_sex(dat_HF_mean %>% mutate(Ratio = R.HF),
+                       chm = 6, 
+                       pard0 =  c(nish$Value[3],
+                                  nish$Value[1],
+                                  nish$Value[4],
+                                  nish$Value[2]), weighted = FALSE)
+  
+# estimate post p(f) under two scenarios:
+
+#p(f) = 0.5 - uninformed & conservative - used in analysis
+dat_HF_mean$fem_prob_hf <- f_probs_informed(hf.temp$params, 
+                                        data = tmp.dat %>% mutate(Ratio = R.HF),
+                                        prior_f = 0.5)
+  
+#p(f) 0 .79 - informed by Richard et al. 1996
+dat_HF_mean$fem_prob_hf_inf <- f_probs_informed(hf.temp$params,
+                                                data = tmp.dat %>% mutate(Ratio = R.HF),
+                                                prior_f = 0.79)
+  
+
+  
+
+#difference between probs:
+dat_HF_mean$diff_fem_prob_hf <-dat_HF_mean$fem_prob_hf_inf - dat_HF_mean$fem_prob_hf
+
+# 4. visualize results----
+
+#convert to long format
+df_long <- dat_HF_mean %>%
+  pivot_longer(
+    cols = c(fem_prob_hf, fem_prob_hf_inf), 
+    names_to = "estimate_type",
+    values_to = "estimate"
+  )
+
+
+#make plot
+
+p4 <- ggplot(df_long, aes(x = reorder(ID, estimate), y = estimate, colour = estimate_type))+
+  geom_point(size = 2, alpha = 0.5)+
+  geom_line(aes(group = ID),color="grey",lty = 2)+
+  theme_classic()+
+  labs(x = "ID",
+       y = "P(f)",      
+       colour = "Prior P(f)")+
+  theme_classic(base_size = 8)+
+  scale_colour_manual(values = c("black", "gray50"),
+                      labels = c("P(f) = 0.5", "P(f) = 0.79"))+
+  theme(axis.text.x = element_text(
+    angle = 90, vjust = 1, hjust = 1
+  ))
+
+
+
+p4
+
+ggsave("Figures/appendix_effect_prior_pf.png",
+       p4, width = 7, height = 4, dpi = 300)
+
+hist(dat_HF_mean$diff_fem_prob_hf)
+
+length(which(dat_HF_mean$diff_fem_prob_hf> 0.05))  
+  
+
+
+d<-dat_HF_mean %>%
+  select(ID, Length,fem_prob_hf, fem_prob_hf_inf)

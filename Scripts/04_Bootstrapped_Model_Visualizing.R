@@ -30,7 +30,7 @@ boot_summary$CV_HF <- (boot_summary$sd_R.HF/boot_summary$mean_R.HF)*100
 
 
 #save
-write.csv(boot_summary, "Data/Processed_Data/boot_summary_id.csv")
+#write.csv(boot_summary, "Data/Processed_Data/boot_summary_id.csv")
 
 # add whaling references
 
