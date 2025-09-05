@@ -37,6 +37,11 @@ dat_HF_mean <- dat_HF%>%
 
 
 # 2. Run model with different chm values -----
+
+
+
+
+
 chm_range <- seq(5, 9, length.out =50)
 
 
@@ -88,10 +93,13 @@ for(i in 1:n_sim){
 }
 
 
+# ~~~a. aggregate values -----
+all_boot <- bind_rows(dat_boot, .id = "bootstrap")
+
+#~~~~b. summarize bootstraps-----
 
 
-#individual measurements:
-all_sim <- bind_rows(dat_sim, .id = "sim")
+
 
 
 
