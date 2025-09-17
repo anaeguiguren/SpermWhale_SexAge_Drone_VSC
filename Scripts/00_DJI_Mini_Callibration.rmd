@@ -116,7 +116,6 @@ sd(dat$error)
 
 Which correspond to the following percentages:
 ```{r}
-dat$error <- dat$bal.length-12.03
 mean(dat$error/12.03)*100
 sd(dat$error/12.03)*100
 ```
@@ -302,7 +301,7 @@ dat_long <- dat %>%
 dat_long.err.summary<- dat_long %>%
   group_by(correction_type)%>%
   summarise(mean_err = mean(error), 
-            mean_err= mean(error), 
+            mean_err_p= mean(error_p), 
             quant_025 = quantile(error, probs = 0.025), 
             quant_975 = quantile(error, probs = 0.975),
             ic_range = quant_975-quant_025, 
@@ -318,7 +317,7 @@ write.csv(dat_long.err.summary, "/Users/anacristinaeguigurenburneo/Documents/Spe
 dat_long %>%
   group_by(correction_type)%>%
   summarise(mean_err = mean(error), 
-            mean_err_p = mean(error_), 
+            mean_err_p = mean(mean_err), 
             quant_5 = quantile(error_p, probs = 0.025), 
             quant_95 = quantile(error_p, probs = 0.975),
             ic_range = quant_95-quant_5, 
@@ -341,6 +340,7 @@ Which looks like error is proportional, more than an added constant
 mean(dat$altitude.err.p)
 sd(dat$altitude.err.p)
 quantile(dat$altitude.err.p, probs = c(0.025, 0.975))
+
 ```
 
 
@@ -348,7 +348,7 @@ quantile(dat$altitude.err.p, probs = c(0.025, 0.975))
 So if I add the result from the gls non.hierarchical model:
 
 ```{r}
-dat$altitude.corr <-1.40 + dat$altitude.fix*1.017
+dat$altitude.corr <-1.403227 + dat$altitude.fix*1.017178 
 
 
 
@@ -389,7 +389,7 @@ Look at error pre & post correction:
 
 ```{r}
 dat$length.error.c <- dat$bal.length.c - 12.03 # corrected error raw
-dat$length.error.c.p <- (dat$length.error.c/dat$bal.length.c)*100
+dat$length.error.c.p <- (dat$length.error.c/12.03 )*100
 
 e <- c(dat$length.error.c.p,dat$length.error.p)
 d <- data.frame(perc.error = e, error.type = rep(c("corrected", "uncorrected"), each = length(dat$bal.length)))
@@ -417,8 +417,9 @@ This looks pretty reasonable!
 What is the 95% confidence interval:
 
 ```{r}
-mean(dat$length.error.c)
-sd(dat$length.error.c)
+mean(dat$length.error.c.p)
+sd(dat$length.error.c.p)
+
 
 quantile(dat$length.error.c, probs=c(0.05, 0.95))
 
