@@ -27,7 +27,8 @@ boot_summary$CV_HD <- (boot_summary$sd_R.HD/boot_summary$mean_R.HD)*100
 boot_summary$CV_HF <- (boot_summary$sd_R.HF/boot_summary$mean_R.HF)*100
 
 
-
+#read in males:
+morpho.males <- read.csv("Data/males_david.csv", header = T)
 
 #save
 #write.csv(boot_summary, "Data/Processed_Data/boot_summary_id.csv")
@@ -798,6 +799,7 @@ comb3 <- (p4+labs(title = "a)")) / p6
 
 ggsave("Figures/bootstrap_post_prob_models_mean_curves_HF_2panel.png", 
        comb3, width = 8, height = 8)
+
 
 
 
