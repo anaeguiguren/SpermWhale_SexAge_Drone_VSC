@@ -11,7 +11,7 @@ theme_set(theme_bw(base_size = 12))
 
 # Load cleaned data
 clean_data <- read.csv("Data/Processed_Data/id_morpho_output_clean_processed.csv")
-
+head(clean_data)
 cat("\nNumber of individuals:", nrow(clean_data))
 
 # Create directory for plots if it doesn't exist
@@ -30,7 +30,7 @@ p1 <- ggplot(clean_data, aes(x = L, y = R.hf)) +
 
 # Save the plot
 ggsave("Figures/length_vs_ratio.png", p1, width = 8, height = 6)
-
+p1
 
 # 3. Precision analysis
 # Box plots of standard deviations
