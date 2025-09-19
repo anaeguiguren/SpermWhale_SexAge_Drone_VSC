@@ -18,9 +18,6 @@ dat<- clean_data %>%
 
 
 
-# make a data frame for HD ratio:
-
-
 # make a data frame for HF ratio:
 dat_HF <- dat %>%
   group_by(ID) %>%
@@ -153,5 +150,5 @@ hd_params_hf <- as.data.frame(hd_params_hf)
 names(hd_params_hf) <- c("fr", "fmax", "mr", "mmax")
 
 
-save.image(file = "bootstrapped_estimates.RData")
+save.image(file = "bootstrapped_estimates_HF.RData")
 
