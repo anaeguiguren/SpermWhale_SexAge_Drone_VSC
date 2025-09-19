@@ -153,6 +153,7 @@ mal_curve <- function(length, fr, fmax, mr, mmax, chm){
   return(Ratio)
 }
 
+
 #~~~b. Estimate sum of squares ----
 
 sumsq <- function(params, data, chm , weighted = FALSE){
