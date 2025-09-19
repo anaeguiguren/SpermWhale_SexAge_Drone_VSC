@@ -754,8 +754,8 @@ p6<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
   
   geom_point(aes(colour = mean_fem_prob_hf, fill = mean_fem_prob_hf,
                  shape = factor(pd_detected)), size = 2, alpha = 0.8) +
-  geom_text_repel(aes(label = label_show), 
-                  box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
+ # geom_text_repel(aes(label = label_show), 
+  #                box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
   # Black outline only for "cert" points
   geom_point(data = subset(boot_summary, high_cert_HF == "cert"),
              aes(x = mean_length, y = mean_R.HF, 
@@ -765,6 +765,10 @@ p6<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
   scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
   scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
   scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
+  #add males from Gully & arctic
+  geom_point(data = morpho.males, 
+             aes(x = TL.m, y = R.HF.m), size = 2, shape = 8, inherit.aes = F)+
+  
   theme_classic()+
   geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
             y = 0.413,
@@ -789,7 +793,7 @@ ggsave("Figures/bootstrap_post_prob_models_mean_curves_HD.png",
        p5+labs(title = "")+guides(colour = "none"), width = 7, height = 4)
 
 
-ggsave("Figures/bootstrap_post_prob_models_mean_curves_HF.png",
+ggsave("Figures/bootstrap_post_prob_models_mean_curves_HF_notxt.png",
        p6+labs(title = "")+guides(colour = "none"), width = 7, height = 4)
 
 

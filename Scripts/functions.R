@@ -143,15 +143,7 @@ fem_curve <- function(length, fr, fmax) {
   fmax * exp(fr * length) / (1 + exp(fr * length))
 }
 
-mal_curve <- function(length, fr, fmax, mr, mmax, chm){
-  base <- fmax * exp(fr  * length) / (1 + exp(fr * length))
-
-  offset <- (length > chm) * mmax * 
-    (exp(mr * length) / (1 + exp(mr * length)) -
-       exp(mr * chm) / (1 + exp(mr * chm)))
-  Ratio <- base + offset
-  return(Ratio)
-}
+ 
 
 #~~~b. Estimate sum of squares ----
 

@@ -98,8 +98,7 @@ boot_summary<-all_boot %>%
     suckling_ever = first(suckling_ever)
   )
 
-boot_summary %>%
-  filter(ID == "GAL2023_011")
+
 
 boot_summary<- boot_summary %>%
   mutate(ID_short = substr(ID, 10, 11))
@@ -259,7 +258,7 @@ p4 <- ggplot(df_long, aes(x = ID_short, y = estimate, colour = estimate_type))+
     angle = 90, vjust = 1, hjust = 1
   ))
 
-
+p4
 
 
 ggsave("Figures/appendix_effect_prior_pf_bootstrapped.png",

@@ -12,7 +12,7 @@ nish <- read.csv("Data/nishiwaki_parameters.csv")
 # subset relevant columns
 dat<- clean_data %>%
   select(ID, Length = TL.m, 
-         R.HD = ratio.HD, R.HF = ratio.HF, 
+         R.HD = ratio.HD, R.HF = ratio.HF,
          suckled_ever, suckling_ever)
 
 
@@ -30,10 +30,11 @@ dat_HF <- dat %>%
 dat_HF_mean <- dat_HF%>%
   group_by(ID)%>%
   summarize(ID = first(ID), Length = mean(Length), 
-            R.HD = mean(R.HD), R.HF = mean(R.HF), 
+            R.HD = mean(R.HD),
+            R.HF = mean(R.HF), 
             suckled_ever = first(suckled_ever), 
-            suckling_ever = first(suckling_ever))
-
+            suckling_ever = first(suckling_ever), 
+            n_photos = n())
 
 
 # 2. Run model with different chm values -----
@@ -234,6 +235,9 @@ dat_HF_mean$fem_prob_hf_inf <- f_probs_informed(hf.temp$params,
 
 #difference between probs:
 dat_HF_mean$diff_fem_prob_hf <-dat_HF_mean$fem_prob_hf_inf - dat_HF_mean$fem_prob_hf
+
+
+#write.csv(dat_HF_mean, "Data/id.morpho.output.mean_prior_check.csv")
 
 # 4. visualize results----
 
