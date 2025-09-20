@@ -38,7 +38,7 @@ cat("Number Identified whals:", length(levels(as.factor(dat_HF$ID))), "\n")
 
 
 # 2. Bootstrap Individual whales -----
-n_boots <- 10 # number of simulations
+n_boots <- 1000 # number of simulations
 
 
 #initialize lists to hold loop values
@@ -160,9 +160,9 @@ names(hd_params_df) <- c("fr", "fmax", "mr", "mmax")
 
 
 hf_params_df <- do.call(rbind, boot_params_hf)
-hf_params_df <- as.data.frame(hd_params_hf)
+hf_params_df <- as.data.frame(hf_params_df)
 
-names(hd_params_hf) <- c("fr", "fmax", "mr", "mmax")
+names(hf_params_df) <- c("fr", "fmax", "mr", "mmax")
 
 
 save.image(file = "bootstrapped_estimates.RData")

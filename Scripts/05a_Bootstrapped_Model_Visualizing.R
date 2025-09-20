@@ -332,9 +332,9 @@ hd_params<-pivot_longer(data = hd_params_df,
 
 hd_params$method <- "R - Dorsal"
 #hf metrics
-hd_params_hf$boot <-1:nrow(hd_params_hf)
+hf_params_df$boot <-1:nrow(hf_params_df)
 
-hf_params<-pivot_longer(data = hd_params_hf, 
+hf_params<-pivot_longer(data = hf_params_df, 
                         cols = -boot, 
                         names_to = "parameters", 
                         values_to = "estimate")
@@ -395,12 +395,12 @@ ggsave("Figures/bootstrap_params_models_HF.png",
 #~~~~b. table----
 
 hd_params_df$method <- "HD"
-hd_params_hf$method <- "HF"
+hf_params_df$method <- "HF"
 
-all_params_wide <- rbind(hd_params_df, hd_params_hf)
+all_params_wide <- rbind(hd_params_df, hf_params_df)
 
 # summarize: 
-detach(package:ggpubr, unload = TRUE)
+#detach(package:ggpubr, unload = TRUE)
 
 all_params_wide %>%
   dplyr::group_by(method) %>%
@@ -493,7 +493,7 @@ print(doc, target = "Figures/bootstra_parameter_table.docx")
 
 
 # create lines for each bootstrap:
-min.L <- 3.6 # length at birth
+min.L <- 4 # length at birth
 max.L.F <- 16.5 # max length females
 max.L.M <- 16.5 #Max male length
 
@@ -577,18 +577,18 @@ mean_lines_hd <- rbind(mean_f_line_hd, mean_m_line_hd)
 all_f_lines_hf <- list()
 all_m_lines_hf <- list()
 
-for(i in 1:nrow(hd_params_hf)){
+for(i in 1:nrow(hf_params_df)){
   
   y_F <- fem_curve(length = x_F,
-                   fr = hd_params_hf$fr[i],
-                   fmax = hd_params_hf$fmax[i])
+                   fr = hf_params_df$fr[i],
+                   fmax = hf_params_df$fmax[i])
   
   
   y_M <- mal_curve(length = x_M,
-                   fr = hd_params_hf$fr[i],
-                   fmax = hd_params_hf$fmax[i], 
-                   mr = hd_params_hf$mr[i], 
-                   mmax = hd_params_hf$mmax[i],
+                   fr = hf_params_df$fr[i],
+                   fmax = hf_params_df$fmax[i], 
+                   mr = hf_params_df$mr[i], 
+                   mmax = hf_params_df$mmax[i],
                    chm = 6)
   
   f_line_hf <- data.frame(Length = x_F, Bootstrap = i, Sex = "F", Ratio = y_F)
@@ -711,8 +711,8 @@ p5  <-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
             linewidth =1, alpha = 1, linetype = "dashed", colour = "#eba8ad") +  # mean lines
   geom_point(aes(colour = mean_fem_prob_hd, fill = mean_fem_prob_hd,
                  shape = factor(pd_detected)), size = 2, alpha = 0.8) +
-  geom_text_repel(aes(label = label_show), 
-                  box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
+  #geom_text_repel(aes(label = label_show), 
+   #               box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
   # Black outline only for "cert" points
   geom_point(data = subset(boot_summary, high_cert_HD == "cert"),
              aes(x = mean_length, y = mean_R.HD, 
