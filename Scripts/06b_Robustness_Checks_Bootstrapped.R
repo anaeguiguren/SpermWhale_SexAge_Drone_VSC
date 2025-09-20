@@ -1,4 +1,6 @@
 #Bootstrapped Robustness checks
+rm(list = ls())
+
 # Check effects of varying chm and prior p(f) on posterior p(f) estimates
 source("Scripts/functions.R")
 library(patchwork)
@@ -140,7 +142,6 @@ f_probs_informed  <- function(params, data, prior_f = 0.5, chm = 6) {
 
 
 
-n_boots <- 1000 # number of simulations
 
 
 #initialize lists to hold loop values
