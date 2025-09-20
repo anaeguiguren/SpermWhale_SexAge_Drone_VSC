@@ -130,7 +130,7 @@ p2 <- ggplot() +
 #~~~~c. save -----
 library(patchwork)
 combined_plot <- p1 + p2
-
+combined_plot
 
 ggsave("Figures/modelled_curves_hf_hd_raw.png",
        combined_plot, width = 13, height = 6)

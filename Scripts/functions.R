@@ -143,7 +143,8 @@ fem_curve <- function(length, fr, fmax) {
   fmax * exp(fr * length) / (1 + exp(fr * length))
 }
 
- mal_curve <- function(length, fr, fmax, mr, mmax, chm){
+#Hal's version
+mal_curve <- function(length, fr, fmax, mr, mmax, chm){
    fmax * exp(fr * pmin(length, chm)) / (1 + exp(fr * pmin(length, chm))) +
      (length > chm) * mmax *
      (
@@ -191,7 +192,8 @@ optim_sex <- function(data, chm,  pard0, weighted = FALSE){
     }
   }
   
-  fit <- optim(pard0, objfun, control= list(maxit = 205000))
+  fit <- optim(pard0, objfun, control= list(maxit = 205000), 
+               method = "BFGS")
   params <- fit$par
   ss <- fit$value
   

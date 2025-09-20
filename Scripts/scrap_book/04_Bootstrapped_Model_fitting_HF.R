@@ -28,7 +28,7 @@ dat_HF <- dat %>%
 
 
 # 2. Bootstrap Individual whales -----
-n_boots <- 1000 # number of simulations
+n_boots <- 10 # number of simulations
 
 
 #initialize lists to hold loop values
@@ -150,5 +150,5 @@ hd_params_hf <- as.data.frame(hd_params_hf)
 names(hd_params_hf) <- c("fr", "fmax", "mr", "mmax")
 
 
-save.image(file = "bootstrapped_estimates_HF.RData")
+#save.image(file = "bootstrapped_estimates_HF.RData")
 

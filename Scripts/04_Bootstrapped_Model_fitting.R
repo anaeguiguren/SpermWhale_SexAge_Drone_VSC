@@ -19,7 +19,6 @@ dat<- clean_data %>%
 
 
 
-# make a data frame for HD ratio:
 
 
 # make a data frame for HF ratio:
@@ -33,14 +32,13 @@ summary_data<-dat_HF %>%
   group_by(ID)%>%
   summarize(n_photos = n())
 
-hist(summary_data$n_photos, breaks = 20)
 
 #how many individuals
 cat("Number Identified whals:", length(levels(as.factor(dat_HF$ID))), "\n")
 
 
 # 2. Bootstrap Individual whales -----
-n_boots <- 1000 # number of simulations
+n_boots <- 10 # number of simulations
 
 
 #initialize lists to hold loop values
@@ -161,8 +159,8 @@ hd_params_df <- as.data.frame(hd_params_df)
 names(hd_params_df) <- c("fr", "fmax", "mr", "mmax")
 
 
-hd_params_hf <- do.call(rbind, boot_params_hf)
-hd_params_hf <- as.data.frame(hd_params_hf)
+hf_params_df <- do.call(rbind, boot_params_hf)
+hf_params_df <- as.data.frame(hd_params_hf)
 
 names(hd_params_hf) <- c("fr", "fmax", "mr", "mmax")
 

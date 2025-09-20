@@ -110,7 +110,6 @@ mean(boot_summary$CI_width_R.HF)
 sd(boot_summary$CI_width_R.HF)
 
 
-#individual cvs -
 
 
 
@@ -316,12 +315,6 @@ ggsave("Figures/bootstrap_post_prob_models_HF.png",
 
 #~~~~ii. summarize -----
 
-boot_summary %>%
-  filter(CI_width_HD< 0.05)
-
-
-boot_summary %>%
-  filter(ID == "GAL2023_074")
 # 2. Parameter estimates ----
 #~~~~a. plot----
 library(ggdist)
@@ -500,7 +493,7 @@ print(doc, target = "Figures/bootstra_parameter_table.docx")
 
 
 # create lines for each bootstrap:
-min.L <- 4 # length at birth
+min.L <- 3.6 # length at birth
 max.L.F <- 16.5 # max length females
 max.L.M <- 16.5 #Max male length
 
