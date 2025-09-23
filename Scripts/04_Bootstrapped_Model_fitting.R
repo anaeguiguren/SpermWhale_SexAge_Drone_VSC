@@ -165,6 +165,28 @@ hf_params_df <- as.data.frame(hf_params_df)
 names(hf_params_df) <- c("fr", "fmax", "mr", "mmax")
 
 
+
+
+#compute confidence interval width for (p(f)) and p(m)
+#female
+boot_summary$CI_width_HD <- boot_summary$prob_hd_CI_hi - boot_summary$prob_hd_CI_low
+boot_summary$CI_width_HF <- boot_summary$prob_hf_CI_hi - boot_summary$prob_hf_CI_low
+
+boot_summary$CI_width_R.HD <- unname(boot_summary$R.HD_CI_hi) - unname(boot_summary$R.HD_CI_low)
+boot_summary$CI_width_R.HF <- unname(boot_summary$R.HF_CI_hi) - unname(boot_summary$R.HF_CI_low)
+
+#male
+boot_summary$CI_width_HD_male <- boot_summary$m_prob_hd_CI_hi - boot_summary$m_prob_hd_CI_low
+boot_summary$CI_width_HF_male <- boot_summary$m_prob_hf_CI_hi - boot_summary$m_prob_hf_CI_low
+#they are equivalent -leave them be!
+
+#CV for length,hf, hd
+
+boot_summary$CV_length <- (boot_summary$sd_length/boot_summary$mean_length)*100
+boot_summary$CV_HD <- (boot_summary$sd_R.HD/boot_summary$mean_R.HD)*100
+boot_summary$CV_HF <- (boot_summary$sd_R.HF/boot_summary$mean_R.HF)*100
+
+
 save.image(file = "bootstrapped_estimates.RData")
 #load("bootstrapped_estimates.RData")
 
