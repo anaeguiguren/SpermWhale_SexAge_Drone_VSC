@@ -152,8 +152,8 @@ ci.w<-long_centered %>%
   labs(y = "95% Confidence interval width", x = "") +
   theme_bw()
 
-ggsave("Figures/Final_Figures/Sup_FigS3_1_boxplot_NR_CI_Widths.png",
-       ci.w, width = 5, height = 5)
+#ggsave("Figures/Final_Figures/Sup_FigS3_1_boxplot_NR_CI_Widths.png",
+#       ci.w, width = 5, height = 5)
 
 #ci.w<-long_centered %>%
  # mutate(width = hi - low)
@@ -210,8 +210,8 @@ param_plot<- all_params_boot %>%
 
 param_plot
 
-ggsave("Figures/Final_Figures/Sup_FigS3_3_bootstrap_params_models.png",
-       param_plot, width = 7, height = 3.5)
+#ggsave("Figures/Final_Figures/Sup_FigS3_3_bootstrap_params_models.png",
+#       param_plot, width = 7, height = 3.5)
 
 #nrflipper only 
 
@@ -331,7 +331,7 @@ ft <- flextable(polished_df)
 ft
 doc <- read_docx()
 doc <- body_add_flextable(doc, ft)
-print(doc, target = "Figures/Final_Figures/Sup_TabS3_1_bootstrap_parameter_table.docx")
+#print(doc, target = "Figures/Final_Figures/Sup_TabS3_1_bootstrap_parameter_table.docx")
 
 
 
@@ -347,9 +347,61 @@ boot_summary$high_cert_HF <- ifelse(boot_summary$CI_width_HF<= 0.05, "cert", "un
 # join to data with p_f estimated on bootstrapped means
 
 boot_ci <-boot_summary %>%
-  select(ID, CI_width_HD, CI_width_HF, high_cert_HD, high_cert_HF)
+  select(ID, CI_width_HD, CI_width_HF, high_cert_HD, high_cert_HF, 
+         prob_hf_CI_low, prob_hf_CI_hi)
 
 dat<- left_join(dat, boot_ci, by = "ID")
+
+
+#summaries
+
+dat%>%
+  filter(P_fem_HF >= 0.95 & high_cert_HF == "cert")%>%
+  select(Length)%>%
+  range()
+
+
+
+dat%>%
+  filter(P_fem_HF >= 0.95 & high_cert_HF == "cert")%>%
+  select(R.HF)%>%
+  range()
+
+# low prob high cert
+
+dat%>%
+  filter(P_fem_HF <= 0.05 & high_cert_HF == "cert")%>%
+  select(Length)%>%
+  count()
+
+dat%>%
+  filter(P_fem_HF <= 0.05 & high_cert_HF == "cert")%>%
+  select(Length)%>%
+  range()
+
+dat%>%
+  filter(P_fem_HF <= 0.05 & high_cert_HF == "cert")%>%
+  select(R.HF)%>%
+  range()
+
+
+
+dat%>%
+  filter(P_fem_HF >= 0.95 & high_cert_HF == "cert")%>%
+  select(R.HF)%>%
+  range()
+
+
+dat %>%
+  filter(pd_detected == "receiving" & high_cert_HF.x == "uncert") %>%
+  select(short_ID, P_fem_HF, prob_hf_CI_low, prob_hf_CI_hi)
+
+
+
+dat %>%
+  filter(pd_detected == "receiving" & high_cert_HF.x == "cert") %>%
+  select(short_ID, P_fem_HF, prob_hf_CI_low, prob_hf_CI_hi)
+
 
 #~~~~ii. plot ----
 

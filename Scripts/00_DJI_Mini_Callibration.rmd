@@ -305,7 +305,8 @@ dat_long.err.summary<- dat_long %>%
             quant_025 = quantile(error, probs = 0.025), 
             quant_975 = quantile(error, probs = 0.975),
             ic_range = quant_975-quant_025, 
-            sd = sd(error))
+            sd = sd(error_p))
+dat_long.err.summary
 
 write.csv(dat_long.err.summary, "/Users/anacristinaeguigurenburneo/Documents/SpermWhale_SexAge_Drone_VSC/Data/Processed_Data/Measurement_error_correction_summary.csv")
 
