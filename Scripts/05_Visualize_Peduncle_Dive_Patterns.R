@@ -1,26 +1,39 @@
 #peduncle dive summaries:
-library(tidyr)
-library(ggplot2)
-library(dplyr)
+rm(list = ls())
 
+source("Scripts/functions.R")
+library(wacolors)
+library(patchwork)
+library(ggrepel)
 
-#load data
+#1. Load and prep data -----
+
+#measures from all whales (also those without enough R.HF measures)
 id.mean<-read.csv("Data/Processed_Data/id_morpho_output_clean_processed.csv")
 
-load("bootstrapped_estimates.RData")
+# only whales with known hf - and p_hf estimates
+load("bootstrapped_estimates_plus_mean.RData")
+head(dat)
+
+# bootstrapped CI widths per individual 
+head(boot_summary)
+
+# get only relevant columns
+boot_summary<- boot_summary %>%
+  select(ID, CI_width_HD, CI_width_HF)
 
 
-#set scale limits so that same legend can be applied to both plots:
-# Color scales
-color_min <- min(boot_summary$mean_fem_prob_hd, boot_summary$mean_fem_prob_hf, na.rm = TRUE)
-color_max <- max(boot_summary$mean_fem_prob_hd, boot_summary$mean_fem_prob_hf, na.rm = TRUE)
 
+# join data frames  
 
-
-
-
-
+# add CI width data to id.mean
 id.mean.p<-left_join(id.mean, boot_summary, by = "ID")
+
+# add pf data to id.mean.p
+
+id.mean.p <- left_join(id.mean.p, dat, by = "ID")
+
+
 #make pd_seen column (giving/receiving)
 
 
@@ -31,31 +44,29 @@ id.mean.p<- id.mean.p %>%
 id.mean.p$pd_detected <- factor(id.mean.p$pd_detected, levels = c("doing", "receiving", "no"))
 
 
-
-# age lables
+# 2. Create visual elements -----
+# age labels
 whaling_lables <- data.frame(
   Length = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), 
   label = c("C", "J", "SA", "AF", "AM/MF", "Fmax","MM"),
   x = 1
 )
 
+# create certainty columns
 
-
-
-#PD observed vs. length -----
-
-#make a shape column:
-
-id.mean.p$HF_prob_CI_width<- id.mean.p$prob_hf_CI_hi - id.mean.p$prob_hf_CI_low
-
-id.mean.p$cert_HF <- ifelse(id.mean.p$HF_prob_CI_width<=0.05, "cert", "uncert")
+id.mean.p$cert_HF <- ifelse(id.mean.p$CI_width_HF<=0.05, "cert", "uncert")
 
 id.mean.p<- id.mean.p %>%
-  mutate(point_shape = ifelse(is.na(mean_fem_prob_hf), "known","unknown"))
+  mutate(point_shape = ifelse(is.na(P_fem_HF), "known","unknown"))
+
+# Color scales for p_fem
+color_min <- min(id.mean.p$P_fem_HF, na.rm = TRUE)
+color_max <- max(id.mean.p$P_fem_HF, na.rm = TRUE)
+
 
 p<- ggplot(id.mean.p, aes(x = factor(pd_detected), y = mean_TL))+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(aes(fill = mean_fem_prob_hf, shape = point_shape, colour=mean_fem_prob_hf), 
+  geom_jitter(aes(fill = P_fem_HF, shape = point_shape, colour=P_fem_HF), 
               width = 0.25, alpha = 0.8, size =2)+
  # geom_jitter(data = subset(id.mean.p, cert_HF == "cert"),
   #            aes(y = mean_TL, fill = mean_fem_prob_hf, shape = point_shape), 
@@ -73,7 +84,7 @@ p<- ggplot(id.mean.p, aes(x = factor(pd_detected), y = mean_TL))+
 p
 
 
-ggsave("Figures/boxplot_peduncle_dives.png",
+ggsave("Figures/Final_Figures/Fig7_boxplot_peduncle_dives.png",
        p, width =7, height = 4)
 
 
@@ -91,10 +102,6 @@ id.mean.p <- id.mean.p %>%
   mutate(lit.sex.age = factor(lit.sex.age, levels = c("calf", "juvenile", "adfem_juv", "adult_male", "mature_male")))
 
 
-
-ggplot(id.mean.p, aes(x = factor(lit.sex.age), y = mean_fem_prob_hf, colour = pd_detected))+
-  geom_jitter()
-  #geom_jitter()
 
 
 #print summary statistics:

@@ -784,6 +784,6 @@ p7<-ggplot(dat, aes(x = Length, y = R.HF))+
 
 
 ggsave("Figures/Final_Figures/Fig6_post_prob_models_simple_curves_HF.png",
-       p6+labs(title = "")+guides(colour = "none"), width = 7, height = 4)
+       p7+labs(title = "")+guides(colour = "none"), width = 7, height = 4)
 
 
