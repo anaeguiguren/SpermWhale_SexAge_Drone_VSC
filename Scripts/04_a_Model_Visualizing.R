@@ -1,21 +1,25 @@
 #Visualize -----
 rm(list = ls())
 
-load("bootstrapped_estimates.RData")
 source("Scripts/functions.R")
 library(wacolors)
 library(patchwork)
+library(ggrepel)
+
+# 1. Load and prep Data -----
+load("bootstrapped_estimates_plus_mean.RData")
 
 
+dat<-dat %>% 
+  mutate(short_ID = substr(ID, 10, 11), 
+         pd_detected = ifelse(suckling_ever == TRUE, "doing",
+                              ifelse(suckled_ever == TRUE, "receiving", "no")))
 
 
 #read in males:
-morpho.males <- read.csv("Data/males_david.csv", header = T)
+morpho.males <- read.csv("Data/Processed_Data/output_p_fem_full_and_males.csv", header = T)
 
-#save
-#write.csv(boot_summary, "Data/Processed_Data/boot_summary_id.csv")
-
-# add whaling references
+#2. add whaling references ----
 
 whaling_lables_hd <- data.frame(
   Length = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), 
@@ -29,80 +33,17 @@ whaling_lables_hf <- data.frame(
   label = c("C", "J", "SA", "AF", "AM/MF", "Fmax","MM")
 )
 
-
-# make individual lables dataframes:
-#include suckling whale IDs and for sure male IDs (> 13.7 m)
-
-boot_summary<-boot_summary %>% 
-  mutate(short_ID = substr(ID, 10, 11), 
-         label_show =
-           ifelse(mean_length>13.7 | suckled_ever == TRUE,
-                  short_ID, 
-                  ""))
-
-
-#make pd_seen column (giving/receiving)
-
-
-boot_summary<- boot_summary %>%
-  mutate(pd_detected = ifelse(suckling_ever == TRUE, "doing",
-                              ifelse(suckled_ever == TRUE, "receiving", "no")))
-
-
-
-
-# 1. Bootstrapped length and NR ratios -----
-
+# 3. Prepare color scales for plotting -----
 #set scale limits so that same legend can be applied to both plots:
 # Color scales
-color_min <- min(boot_summary$mean_fem_prob_hd, boot_summary$mean_fem_prob_hf, na.rm = TRUE)
-color_max <- max(boot_summary$mean_fem_prob_hd, boot_summary$mean_fem_prob_hf, na.rm = TRUE)
-
-# size scales
-size_min <- min(boot_summary$CI_width_HD, boot_summary$CI_width_HF, na.rm = TRUE)
-size_max <- max(boot_summary$CI_width_HD, boot_summary$CI_width_HF, na.rm = TRUE)
-
-#~~~i. general summaries----
-
-boot_summary$length_CI_width <- boot_summary$length_CI_hi- boot_summary$length_CI_low
-hist(boot_summary$length_CI_width, breaks = 20)
-mean(boot_summary$length_CI_width)
-median(boot_summary$length_CI_width)
-sd(boot_summary$length_CI_width)
-
-plot(boot_summary$mean_length, boot_summary$length_CI_width)
-plot(boot_summary$mean_length, boot_summary$length_CI_width/boot_summary$mean_length)
-hist(boot_summary$length_CI_width/boot_summary$mean_length*100, breaks = 20)
-
-median(boot_summary$length_CI_width/boot_summary$mean_length*100)
-mean(boot_summary$length_CI_width/boot_summary$mean_length*100)
-sd(boot_summary$length_CI_width/boot_summary$mean_length*100)
+color_min <- min(dat$P_fem_HD, dat$P_fem_HF, na.rm = TRUE)# based on individual pfs
+color_max <- max(dat$P_fem_HD, dat$P_fem_HF, na.rm = TRUE)
 
 
-range(boot_summary$mean_length)
-hist(boot_summary$mean_length, breaks = 20)
-quantile(boot_summary$mean_length, probs = c(0.05, 0.95))
-
-#widths:
-
-mean(boot_summary$CI_width_R.HD)
-sd(boot_summary$CI_width_R.HD)
-
-mean(boot_summary$CI_width_R.HF)
-sd(boot_summary$CI_width_R.HF)
-
-
-
-
-
-#~~~ii. TL vs NR plots----
-
-# make plots:
-
-
+# 4. Raw TL vs NR plots -----
 p0a<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
-
+  
   geom_pointrange(aes(ymin = R.HD_CI_low, ymax = R.HD_CI_hi), 
                   alpha = 0.7, size = 0.2)+
   geom_linerange(aes(xmin = length_CI_low, xmax = length_CI_hi), alpha = 0.7)+
@@ -142,18 +83,14 @@ p0b<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
 comb0 <- p0a + p0b
 comb0
 
-ggsave("Figures/bootstrap_length_NRS.png",
-       comb0, width = 9, height = 4)
+#ggsave("Figures/bootstrap_length_NRS.png",
+ #      comb0, width = 9, height = 4)
 
-ggsave("Figures/bootstrap_length_NR_flipper.png",
-       p0b+labs(title = ""), width =7 , height = 4)
-
-
-#~~~iii. NR variability plots----
+#ggsave("Figures/Final_figures/Fig3_bootstrap_length_NR_flipper.png",
+ #      p0b+labs(title = ""), width =7 , height = 4)
 
 
-boot_summary$CI_width_R.HD
-boot_summary$CI_width_R.HF
+# 5. NR variability plots----
 
 #make centered values:
 centered_df<-boot_summary%>%
@@ -170,11 +107,10 @@ centered_df<-boot_summary%>%
          R.HF.CI_width = unname(R.HF_CI_hi - R.HF_CI_low)
          
          
-         )
+  )
 
 
 #how many are wider: 
-centered_df$R.HD.CI_width
 
 
 centered_df %>%
@@ -216,89 +152,15 @@ ci.w<-long_centered %>%
   labs(y = "95% Confidence interval width", x = "") +
   theme_bw()
 
-ggsave("Figures/boxplot_NR_CI_Widths_supplementary.png",
-       ci.w, width = 5, height = 5)
+#ggsave("Figures/Final_Figures/Sup_FigS3_1_boxplot_NR_CI_Widths.png",
+#       ci.w, width = 5, height = 5)
 
 ci.w<-long_centered %>%
   mutate(width = hi - low)
 
-# 2. Bootstrapped p_f for models based on HD and HF----
-#~~~~i. plot ----
-library(ggrepel)
-  
-
-#highlight very certain points:
-boot_summary$high_cert_HD <- ifelse(boot_summary$CI_width_HD<= 0.05, "cert", "uncert")
-
-boot_summary$high_cert_HF <- ifelse(boot_summary$CI_width_HF<= 0.05, "cert", "uncert")
-  
-p1 <- ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD)) +
-  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed") + 
-  geom_point(aes(colour = mean_fem_prob_hd, fill = mean_fem_prob_hd,
-                 shape = factor(pd_detected)), size = 2, alpha = 0.9) +
-  # Black outline only for "cert" points
-  geom_point(data = subset(boot_summary, high_cert_HD == "cert"),
-             aes(x = mean_length, y = mean_R.HD, 
-                 shape = factor(pd_detected)),
-             color = "black", stroke = 1, size = 2, fill = NA, inherit.aes = FALSE) +
-  geom_text_repel(aes(label = label_show), 
-                  box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
-  scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  scale_size(limits = c(size_min, size_max)) +
-  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22)) +
-  theme_classic() +
-  geom_text(data = whaling_lables_hf, aes(x = Length + 0.1, label = label),
-            hjust = 0, y = 0.71, size = 2.5, inherit.aes = FALSE) +
-  labs(title = "b)",
-       x = "Length (m)",
-       y = expression(NR[flipper]),      
-       fill = "P(f)",
-       size = "95% CI width",
-       shape = "PD observed")+theme(legend.position = "none")
 
 
-p2 <- ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF)) +
-  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed") + 
-  geom_point(aes(colour = mean_fem_prob_hf, fill = mean_fem_prob_hf,
-                 shape = factor(pd_detected)), size = 2, alpha = 0.9) +
-  # Black outline only for "cert" points
-  geom_point(data = subset(boot_summary, high_cert_HF == "cert"),
-             aes(x = mean_length, y = mean_R.HF, 
-                 shape = factor(pd_detected)),
-             color = "black", stroke = 1, size = 2, fill = NA, inherit.aes = FALSE) +
-  geom_text_repel(aes(label = label_show), 
-                  box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
-  scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  scale_size(limits = c(size_min, size_max)) +
-  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22)) +
-  theme_classic() +
-  geom_text(data = whaling_lables_hf, aes(x = Length + 0.1, label = label),
-            hjust = 0, y = 0.412, size = 2.5, inherit.aes = FALSE) +
-  labs(title = "b)",
-       x = "Length (m)",
-       y = expression(NR[flipper]),      
-       fill = "P(f)",
-       size = "95% CI width",
-       shape = "PD observed")+guides(colour = "none")
-
-
-comb <- p1 + p2
-comb 
-
-ggsave("Figures/bootstrap_post_prob_models.png",
-       comb, width = 9, height = 4)
-
-
-ggsave("Figures/bootstrap_post_prob_models_HF.png",
-       p2 + labs(title = ""), width = 8, height = 4)
-
-
-#~~~~ii. summarize -----
-
-# 2. Parameter estimates ----
-#~~~~a. plot----
+# 6. Parameter estimates - Bootstrap outputs----
 library(ggdist)
 library(distributional)
 
@@ -307,28 +169,28 @@ library(distributional)
 
 hd_params_df$boot <-1:nrow(hd_params_df)
 
-hd_params<-pivot_longer(data = hd_params_df, 
-             cols = -boot, 
-             names_to = "parameters", 
-             values_to = "estimate")
-
-hd_params$method <- "R - Dorsal"
-#hf metrics
-hf_params_df$boot <-1:nrow(hf_params_df)
-
-hf_params<-pivot_longer(data = hf_params_df, 
+hd_params_boot<-pivot_longer(data = hd_params_df, 
                         cols = -boot, 
                         names_to = "parameters", 
                         values_to = "estimate")
 
-hf_params$method <- "R - Flipper"
+hd_params_boot$method <- "R - Dorsal"
+#hf metrics
+hf_params_df$boot <-1:nrow(hf_params_df)
+
+hf_params_boot<-pivot_longer(data = hf_params_df, 
+                        cols = -boot, 
+                        names_to = "parameters", 
+                        values_to = "estimate")
+
+hf_params_boot$method <- "R - Flipper"
 
 #combine:
-all_params <- bind_rows(hd_params, hf_params)
+all_params_boot <- bind_rows(hd_params_boot, hf_params_boot)
 
 param_lables <- c("A. maxf", "B. fr", "C. maxm", "D. mr")
 
-param_plot<- all_params %>%
+param_plot<- all_params_boot %>%
   ggplot(aes(x = method, y = estimate))+
   geom_boxplot(alpha = 0.8)+
   scale_x_discrete(
@@ -344,11 +206,11 @@ param_plot<- all_params %>%
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(), 
         legend.position = "null")
-  
+
 
 param_plot
 
-ggsave("Figures/bootstrap_params_models.png",
+ggsave("Figures/Final_Figures/Sup_FigS3_3_bootstrap_params_models.png",
        param_plot, width = 7, height = 3.5)
 
 #nrflipper only 
@@ -356,7 +218,7 @@ ggsave("Figures/bootstrap_params_models.png",
 
 param_lables <- c("A. maxf", "B. fr", "C. maxm", "D. mr")
 
-hf_param_plot <- hf_params %>%
+hf_param_plot <- hf_params_boot %>%
   ggplot(aes(x = parameters, y = estimate)) +
   geom_boxplot(alpha = 0.8) +
   facet_wrap(~parameters, scales = "free", ncol = 4) +
@@ -370,7 +232,7 @@ hf_param_plot <- hf_params %>%
 
 
 
-ggsave("Figures/bootstrap_params_models_HF.png",
+ggsave("Figures/Final_Figures/Fig4_bootstrap_params_models_HF.png",
        hf_param_plot, width = 7, height = 3.5)
 
 
@@ -470,8 +332,89 @@ doc <- read_docx()
 doc <- body_add_flextable(doc, ft)
 print(doc, target = "Figures/bootstra_parameter_table.docx")
 
-#~~~~c. curves -----
 
+
+
+# 7. P_fem estimates from models based on HD and HF----
+
+#~~~~i. prep ----
+#highlight points with bootstrapped CI's < 0.05:
+boot_summary$high_cert_HD <- ifelse(boot_summary$CI_width_HD<= 0.05, "cert", "uncert")
+
+boot_summary$high_cert_HF <- ifelse(boot_summary$CI_width_HF<= 0.05, "cert", "uncert")
+
+# join to data with p_f estimated on bootstrapped means
+
+boot_ci <-boot_summary %>%
+  select(ID, CI_width_HD, CI_width_HF, high_cert_HD, high_cert_HF)
+
+dat<- left_join(dat, boot_ci, by = "ID")
+
+#~~~~ii. plot ----
+
+p1 <- ggplot(dat, aes(x = Length, y = R.HD)) +
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed") + 
+  geom_point(aes(colour = P_fem_HD, fill = P_fem_HD,
+                 shape = factor(pd_detected)), size = 2, alpha = 0.9) +
+  # Black outline only for "cert" points
+  geom_point(data = subset(dat, high_cert_HD == "cert"),
+             aes(x = Length, y = R.HD, 
+                 shape = factor(pd_detected)),
+             color = "black", stroke = 1, size = 2, fill = NA, inherit.aes = FALSE) +
+  #geom_text_repel(aes(label = label_show), 
+  #                box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
+  scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
+  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
+  #scale_size(limits = c(size_min, size_max)) +
+  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22)) +
+  theme_classic() +
+  geom_text(data = whaling_lables_hf, aes(x = Length + 0.1, label = label),
+            hjust = 0, y = 0.71, size = 2.5, inherit.aes = FALSE) +
+  labs(title = "b)",
+       x = "Length (m)",
+       y = expression(NR[flipper]),      
+       fill = "P(f)",
+       size = "95% CI width",
+       shape = "PD observed")+theme(legend.position = "none")
+
+
+p2 <- ggplot(dat, aes(x = Length, y = R.HF)) +
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed") + 
+  geom_point(aes(colour = P_fem_HF, fill = P_fem_HF ,
+                 shape = factor(pd_detected)), size = 2, alpha = 0.9) +
+  # Black outline only for "cert" points
+  geom_point(data = subset(dat, high_cert_HF == "cert"),
+             aes(x = Length, y = R.HF, 
+                 shape = factor(pd_detected)),
+             color = "black", stroke = 1, size = 2, fill = NA, inherit.aes = FALSE) +
+  # geom_text_repel(aes(label = label_show), 
+  #                box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
+  scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
+  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
+  #scale_size(limits = c(size_min, size_max)) +
+  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22)) +
+  theme_classic() +
+  geom_text(data = whaling_lables_hf, aes(x = Length + 0.1, label = label),
+            hjust = 0, y = 0.412, size = 2.5, inherit.aes = FALSE) +
+  labs(title = "b)",
+       x = "Length (m)",
+       y = expression(NR[flipper]),      
+       fill = "P(f)",
+       size = "95% CI width",
+       shape = "PD observed")+guides(colour = "none")
+
+
+comb <- p1 + p2
+comb 
+
+ggsave("Figures/bootstrap_post_prob_models.png",
+       comb, width = 9, height = 4)
+
+
+ggsave("Figures/bootstrap_post_prob_models_HF.png",
+       p2 + labs(title = ""), width = 8, height = 4)
+
+#8. Bootstrapped curves -----
 
 
 # create lines for each bootstrap:
@@ -546,10 +489,10 @@ m_mean_line_hd <- mean_curve(m_lines_hd)
 
 
 mean_f_line_hd <- data.frame(Length = f_mean_line_hd$Length,
-                          Ratio = f_mean_line_hd$Ratio, Sex = "Fem", Bootstrap = 1)
+                             Ratio = f_mean_line_hd$Ratio, Sex = "Fem", Bootstrap = 1)
 
 mean_m_line_hd <- data.frame(Length = m_mean_line_hd$Length,
-                          Ratio = m_mean_line_hd$Ratio, Sex = "Mal", Bootstrap = 1)
+                             Ratio = m_mean_line_hd$Ratio, Sex = "Mal", Bootstrap = 1)
 
 mean_lines_hd <- rbind(mean_f_line_hd, mean_m_line_hd)
 
@@ -629,8 +572,8 @@ mean_lines_hf <- rbind(mean_f_line_hf, mean_m_line_hf)
 #HD
 
 p3<-ggplot(all_lines_hd, aes(x = Length, y = Ratio, 
-                         group = interaction(Bootstrap, Sex),
-                         colour = Sex))+
+                             group = interaction(Bootstrap, Sex),
+                             colour = Sex))+
   #geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
   geom_vline(xintercept = 6, alpha = 0.3)+  geom_line(alpha = 0.05, linewidth = 0.5)+
   geom_line(data = mean_f_line_hd, aes(x = Length, y = Ratio, colour = Sex), 
@@ -659,7 +602,7 @@ p4<-ggplot(all_lines_hf, aes(x = Length, y = Ratio,
             linewidth = 1, alpha = 1) +  # mean lines
   geom_line(data = mean_m_line_hf, aes(x = Length, y = Ratio, colour = Sex), 
             linewidth =1, alpha = 1 ,linetype = "dashed") +  # mean lines
-
+  
   scale_color_manual(values = c("F" = "#123c2e", "M" = "#eba8ad", 
                                 "Fem" = "#b8c5c0", "Mal" = "#f9e5e6"))+
   scale_y_continuous(limits = c(0.24, 0.42))+
@@ -669,23 +612,21 @@ p4<-ggplot(all_lines_hf, aes(x = Length, y = Ratio,
   theme_classic()+
   labs(x = "Length (m)", y = expression(NR[flipper]), title = "b)")+
   guides(colour = "none")
- 
+
 
 curves <- p3 + p4
 
 curves
-ggsave("Figures/bootstrap_params_curves.png",
+ggsave("Figures/Final_Figures/Sup_FigS3_2_bootstrap_params_curves.png",
        curves, width = 8, height = 4)
 
-ggsave("Figures/bootstrap_params_curves_HF.png",
+ggsave("Figures/Final_Figures/Fig5_bootstrap_params_curves_HF.png",
        p4+labs(title = ""), width = 7, height = 4)
-ggsave("Figures/bootstrap_params_curves_HD.png",
-       p3+labs(title = ""), width = 7, height = 4)
 
-# 7. Bootstrapped p(f) + mean curves----
+# 9. Bootstrapped p(f) + mean curves----
 
 
-p5  <-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
+p5  <-ggplot(dat, aes(x = Length, y = R.HD))+
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
   geom_line(data = mean_f_line_hd %>% filter(Length < 12), aes(x = Length, y = Ratio), 
             linewidth = 1, alpha = 1, colour = "#123c2e") +  # mean lines
@@ -694,7 +635,7 @@ p5  <-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HD))+
   geom_point(aes(colour = mean_fem_prob_hd, fill = mean_fem_prob_hd,
                  shape = factor(pd_detected)), size = 2, alpha = 0.8) +
   #geom_text_repel(aes(label = label_show), 
-   #               box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
+  #               box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
   # Black outline only for "cert" points
   geom_point(data = subset(boot_summary, high_cert_HD == "cert"),
              aes(x = mean_length, y = mean_R.HD, 
@@ -729,7 +670,7 @@ p6<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
   
   geom_point(aes(colour = mean_fem_prob_hf, fill = mean_fem_prob_hf,
                  shape = factor(pd_detected)), size = 2, alpha = 0.8) +
- # geom_text_repel(aes(label = label_show), 
+  # geom_text_repel(aes(label = label_show), 
   #                box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
   # Black outline only for "cert" points
   geom_point(data = subset(boot_summary, high_cert_HF == "cert"),
@@ -771,34 +712,4 @@ ggsave("Figures/bootstrap_post_prob_models_mean_curves_HD.png",
 ggsave("Figures/bootstrap_post_prob_models_mean_curves_HF_notxt.png",
        p6+labs(title = "")+guides(colour = "none"), width = 7, height = 4)
 
-
-
-# HF. Only plots-----
-comb3 <- (p4+labs(title = "a)")) / p6
-
-ggsave("Figures/bootstrap_post_prob_models_mean_curves_HF_2panel.png", 
-       comb3, width = 8, height = 8)
-
-
-
-
-# 6. visualize individual - level variations----
-boot_summary%>%
-  arrange(mean_fem_prob_hd)%>%
-  mutate(ind = seq_along(ID))%>%
-  ggplot(aes(x = ind, y = mean_fem_prob_hd, colour = mean_fem_prob_hd))+
-  scale_color_wa_c("puget", , limits = c(color_min, color_max)) +
-  geom_errorbar(aes(ymin = prob_hd_CI_low, ymax = prob_hd_CI_hi ))+
-  geom_point()+
-  theme_classic()
-
-
-boot_summary%>%
-  arrange(mean_fem_prob_hf)%>%
-  mutate(ind = seq_along(ID))%>%
-  ggplot(aes(x = ind, y = mean_fem_prob_hf, colour = mean_fem_prob_hf))+
-  scale_color_wa_c("puget", , limits = c(color_min, color_max)) +
-  geom_errorbar(aes(ymin = prob_hf_CI_low, ymax = prob_hf_CI_hi ))+
-  geom_point()+
-  theme_classic()
 

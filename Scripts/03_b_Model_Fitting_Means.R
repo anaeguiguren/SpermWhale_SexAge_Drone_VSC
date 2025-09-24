@@ -137,6 +137,19 @@ ggsave("Figures/modelled_curves_hf_hd_raw.png",
 
 head(dat_HF)
 
+dat <- dat_HF
+rm(all_boot, clean_data,
+   combined_plot, 
+   curve_df_HD, 
+   curve_df_HF, 
+   dat_boot, 
+   dat_HF, 
+   hd_mod, 
+   hd.temp,
+   hf_mod, hf.temp, 
+   nish, p1, p2, se, ss_hd, ss_hf, summary_data, 
+   tmp.dat, i, n_boots, tlf, tlm
+   )
 
 save.image("bootstrapped_estimates_plus_mean.RData")
 
