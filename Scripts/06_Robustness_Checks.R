@@ -194,10 +194,14 @@ p4 <- ggplot(df_long, aes(x = short_ID, y = estimate, colour = estimate_type))+
 p4
 
 
-ggsave("Figures/Final_Figures/Sup_FigS4_2_effect_prior_pf_bootstrapped.png",
+ggsave("Figures/Final_Figures/Sup_FigS4_2_effect_prior_pf.png",
        p4, width = 7, height = 4, dpi = 300)
 
 
 df_long %>%
   filter(short_ID=="11")%>%
+  select(estimate)
+
+df_long %>%
+  filter(Length < 5)%>%
   select(estimate)
