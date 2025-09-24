@@ -4,7 +4,6 @@ rm(list = ls())
 load("bootstrapped_estimates_plus_mean.RData")
 source("Scripts/functions.R")
 
-dat <- dat_HF
 
 
 

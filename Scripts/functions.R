@@ -184,17 +184,27 @@ sumsq <- function(params, data, chm , weighted = FALSE){
 
 #~~~c. Fit parameters using optim ----
 optim_sex <- function(data, chm,  pard0, weighted = FALSE){
-  objfun <- function(p){ #this is the thing we want to minimize (optimize)
-    if(weighted) {
-      sumsq(p, data , chm, TRUE)
-    }else{
-      sumsq(p, data , chm, FALSE)$ss
-    }
+  objfun <- function(p) {
+    #if(p[2] > p[4]) return(1e12)  # penalty if fmax >= mmax
+    if(p[3] <0 ) return(1e12)  # penalty if fmax >= mmax
+    
+    val <- tryCatch({
+      if(weighted) {
+        sumsq(p, data , chm, TRUE)
+      } else {
+        sumsq(p, data , chm, FALSE)$ss
+      }
+    }, error = function(e) 1e12)
+    
+    if (!is.finite(val)) val <- 1e12
+    return(val)
   }
   
-  fit <- optim(pard0, objfun, control= list(maxit = 205000), 
+  fit <- optim(pard0, objfun, 
+               control= list(maxit = 205000),
                method = "BFGS")
-  params <- fit$par
+  
+  params<- fit$par
   ss <- fit$value
   
   cat(ifelse(weighted, "Weighted SS", "Unweighted SS"), "\n")

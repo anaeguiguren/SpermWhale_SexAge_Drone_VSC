@@ -39,7 +39,8 @@ hd_mod <-optim_sex(data = dat_HF %>% mutate(Ratio = R.HD),
                    pard0 = c(fr = nish[3,2], fmax = nish[1,2], mr = nish[4,2], mmax = nish[2,2]), 
                    chm = 6)
 
-hd_params <- hd_mod$params
+hd_params <- hd_mod$fit$par
+
 
 #posterior probabilities
 dat_HF$P_fem_HD <- f_probs(params = hd_params, data = dat_HF%>% mutate(Ratio = R.HD))
@@ -58,8 +59,8 @@ dat_HF$P_fem_HF<-f_probs(params = hf_params, data = dat_HF %>% mutate(Ratio = R.
 
 # 5. Visualize ------
 
-tlm = seq(3.6, 17, by = 0.2) # male length range
-tlf = seq(3.6, 12, by = 0.2) #female length range
+tlm = seq(4, 17, by = 0.2) # male length range
+tlf = seq(4, 12, by = 0.2) #female length range
 
 #~~~~a. HD----
 
@@ -80,13 +81,13 @@ se <- dat_HF %>%
 
 p1 <- ggplot() +
   # Use color for curve lines (discrete)
-  geom_line(data = curve_df_HD, aes(x = Length, y = R.HD, color = Curve), linewidth=1) +
+  geom_line(data = curve_df_HD, aes(x = Length, y = R.HD, colour = Curve), linewidth=1) +
   
   # Use fill or color gradient for points
   geom_point(data = dat_HF, aes(x = Length, y = R.HD, fill = P_fem_HD), size =3,shape = 21, alpha = 0.7) +
   geom_point(data = se, aes(x = Length, y = R.HD, fill = P_fem_HD), shape = 22, size = 4)+
   geom_text(data = se, aes(x = Length, y = R.HD,
-                              label = gsub("gal2023_0", "", tolower(se$ID))), hjust = 0.5, vjust = 0.5, size = 2)+
+                              label = gsub("gal2023_0", "", tolower(ID))), hjust = 0.5, vjust = 0.5, size = 2)+
   scale_color_manual(values =c("darkcyan", "darkorange")) +
   scale_fill_gradientn(colors= c("darkorange","darkcyan")) +
   

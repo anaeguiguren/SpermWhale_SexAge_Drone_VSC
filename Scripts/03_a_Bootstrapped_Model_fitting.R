@@ -157,13 +157,14 @@ hd_params_df <- do.call(rbind, boot_params_hd)
 hd_params_df <- as.data.frame(hd_params_df)
 
 names(hd_params_df) <- c("fr", "fmax", "mr", "mmax")
+summary(hd_params_df)
 
 
 hf_params_df <- do.call(rbind, boot_params_hf)
 hf_params_df <- as.data.frame(hf_params_df)
 
 names(hf_params_df) <- c("fr", "fmax", "mr", "mmax")
-
+summary(hf_params_df)
 
 
 

@@ -152,8 +152,8 @@ ci.w<-long_centered %>%
   labs(y = "95% Confidence interval width", x = "") +
   theme_bw()
 
-#ggsave("Figures/Final_Figures/Sup_FigS3_1_boxplot_NR_CI_Widths.png",
-#       ci.w, width = 5, height = 5)
+ggsave("Figures/Final_Figures/Sup_FigS3_1_boxplot_NR_CI_Widths.png",
+       ci.w, width = 5, height = 5)
 
 ci.w<-long_centered %>%
   mutate(width = hi - low)
@@ -328,6 +328,7 @@ library(officer)
 # Export to Word document
 
 ft <- flextable(polished_df)
+ft
 doc <- read_docx()
 doc <- body_add_flextable(doc, ft)
 print(doc, target = "Figures/bootstra_parameter_table.docx")
@@ -623,7 +624,12 @@ ggsave("Figures/Final_Figures/Sup_FigS3_2_bootstrap_params_curves.png",
 ggsave("Figures/Final_Figures/Fig5_bootstrap_params_curves_HF.png",
        p4+labs(title = ""), width = 7, height = 4)
 
-# 9. Bootstrapped p(f) + mean curves----
+# 9. Simple P_F + simple curve + bootstrapped CI indicators----
+
+# 1. make curve based on simple output params.
+# add to plot and fix!!!
+
+# write final df curves
 
 
 p5  <-ggplot(dat, aes(x = Length, y = R.HD))+
