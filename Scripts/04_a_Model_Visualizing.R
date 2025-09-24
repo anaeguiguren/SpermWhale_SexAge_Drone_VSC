@@ -155,8 +155,8 @@ ci.w<-long_centered %>%
 ggsave("Figures/Final_Figures/Sup_FigS3_1_boxplot_NR_CI_Widths.png",
        ci.w, width = 5, height = 5)
 
-ci.w<-long_centered %>%
-  mutate(width = hi - low)
+#ci.w<-long_centered %>%
+ # mutate(width = hi - low)
 
 
 
@@ -331,7 +331,7 @@ ft <- flextable(polished_df)
 ft
 doc <- read_docx()
 doc <- body_add_flextable(doc, ft)
-print(doc, target = "Figures/bootstra_parameter_table.docx")
+print(doc, target = "Figures/Final_Figures/Sup_TabS3_1_bootstrap_parameter_table.docx")
 
 
 
@@ -626,37 +626,57 @@ ggsave("Figures/Final_Figures/Fig5_bootstrap_params_curves_HF.png",
 
 # 9. Simple P_F + simple curve + bootstrapped CI indicators----
 
-# 1. make curve based on simple output params.
-# add to plot and fix!!!
+# ~~~a. make curves based on simple output params.------
 
-# write final df curves
+tlm = seq(4, 17, by = 0.2) # male length range
+tlf = seq(4, 12, by = 0.2) #female length range
 
+
+curve_df_HD <- tibble(
+  Length = c(tlf, tlm),
+  Curve = c(rep("Female", length(tlf)), rep("Male", length(tlm))),
+  R.HD = c(fem_curve(tlf, fr = hd_params[1], fmax = hd_params[2]),
+           mal_curve(tlm, fr = hd_params[1], fmax = hd_params[2],
+                     mr = hd_params[3], mmax = hd_params[4], chm = 6))
+)
+
+curve_df_HF <- tibble(
+  Length = c(tlf, tlm),
+  Curve = c(rep("Female", length(tlf)), rep("Male", length(tlm))), 
+  R.HF = c(
+    fem_curve(tlf, fr = hf_params[1], fmax = hf_params[2]),
+    mal_curve(tlm, fr = hf_params[1], fmax = hf_params[2], 
+             mr = hf_params[3], mmax = hf_params[4], chm = 6)
+  )
+)
+
+
+#~~~~b. plot-----
 
 p5  <-ggplot(dat, aes(x = Length, y = R.HD))+
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
-  geom_line(data = mean_f_line_hd %>% filter(Length < 12), aes(x = Length, y = Ratio), 
-            linewidth = 1, alpha = 1, colour = "#123c2e") +  # mean lines
-  geom_line(data = mean_m_line_hd, aes(x = Length, y = Ratio), 
+  geom_line(data = curve_df_HD %>% filter(Length < 12 & Curve == "Female"), aes(x = Length, y = R.HD), 
+            linewidth = 1, alpha = 1, colour = "#123c2e") +  # female curve - simple 
+  geom_line(data = curve_df_HD %>% filter(Length >=6 & Curve == "Male"), aes(x = Length, y = R.HD), 
             linewidth =1, alpha = 1, linetype = "dashed", colour = "#eba8ad") +  # mean lines
-  geom_point(aes(colour = mean_fem_prob_hd, fill = mean_fem_prob_hd,
+  geom_point(aes(colour = P_fem_HD, fill = P_fem_HD,
                  shape = factor(pd_detected)), size = 2, alpha = 0.8) +
   #geom_text_repel(aes(label = label_show), 
   #               box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
   # Black outline only for "cert" points
-  geom_point(data = subset(boot_summary, high_cert_HD == "cert"),
-             aes(x = mean_length, y = mean_R.HD, 
+  geom_point(data = subset(dat, high_cert_HD == "cert"),
+             aes(x = Length, y = R.HD, 
                  shape = factor(pd_detected), fill = NULL),
              color = "black", stroke = 1, size = 2,  inherit.aes = FALSE) +
   
   scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
   scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  scale_size(limits = c(size_min, size_max))+
+  #scale_size(limits = c(size_min, size_max))+
   scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
   theme_classic()+
   geom_text(data = whaling_lables_hd, aes(x = Length+0.1, label = label),
             y = 0.71,
             hjust = 0, size = 2.5, inherit.aes = F)+
-  
   labs(title = "a)",
        x = "Length (m)",
        y = expression(NR[dorsal]),      
@@ -667,35 +687,31 @@ p5  <-ggplot(dat, aes(x = Length, y = R.HD))+
 
 
 
-p6<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
+p6<-ggplot(dat, aes(x = Length, y = R.HF))+
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+ 
-  geom_line(data = mean_f_line_hf %>% filter(Length < 12), aes(x = Length, y = Ratio), 
+  geom_line(data = curve_df_HF %>% filter(Length < 12 & Curve == "Female"),
+            aes(x = Length, y = R.HF), 
             linewidth = 1, alpha = 1, colour = "#123c2e") +  # mean lines
-  geom_line(data = mean_m_line_hf, aes(x = Length, y = Ratio), 
+  geom_line(data = curve_df_HF %>% filter(Length >= 6 & Curve == "Male"), 
+            aes(x = Length, y = R.HF), 
             linewidth =1, alpha = 1, linetype = "dashed", colour = "#eba8ad") +  # mean lines
   
-  geom_point(aes(colour = mean_fem_prob_hf, fill = mean_fem_prob_hf,
+  geom_point(aes(colour = P_fem_HF, fill = P_fem_HF,
                  shape = factor(pd_detected)), size = 2, alpha = 0.8) +
   # geom_text_repel(aes(label = label_show), 
   #                box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
   # Black outline only for "cert" points
-  geom_point(data = subset(boot_summary, high_cert_HF == "cert"),
-             aes(x = mean_length, y = mean_R.HF, 
+  geom_point(data = subset(dat, high_cert_HF == "cert"),
+             aes(x = Length, y = R.HF, 
                  shape = factor(pd_detected), fill = NULL),
              color = "black", stroke = 1, size = 2,  inherit.aes = FALSE) +
-  
   scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
   scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
   scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
-  #add males from Gully & arctic
-  geom_point(data = morpho.males, 
-             aes(x = TL.m, y = R.HF.m), size = 2, shape = 8, inherit.aes = F)+
-  
   theme_classic()+
   geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
             y = 0.413,
             hjust = 0, size =2.5, inherit.aes = F)+
-  
   labs(title = "b)",
        x = "Length (m)",
        y = expression(NR[flipper]),      
@@ -707,7 +723,7 @@ p6<-ggplot(boot_summary, aes(x = mean_length, y = mean_R.HF))+
 comb2 <- p5 + p6
 comb2 
 
-ggsave("Figures/bootstrap_post_prob_models_mean_curves.png",
+ggsave("Figures/Final_Figures/Sup_FigS3_4_bootstrap_post_prob_models_simple_curves.png",
        comb2, width = 9, height = 4)
 
 
@@ -716,6 +732,58 @@ ggsave("Figures/bootstrap_post_prob_models_mean_curves_HD.png",
 
 
 ggsave("Figures/bootstrap_post_prob_models_mean_curves_HF_notxt.png",
+       p6+labs(title = "")+guides(colour = "none"), width = 7, height = 4)
+
+
+
+#### c. plot with males ------
+#subset males
+
+morpho.males<- morpho.males %>%
+  filter(grepl("2024", ID))%>%
+  mutate(R.HF = Ratio)
+
+
+p7<-ggplot(dat, aes(x = Length, y = R.HF))+
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+ 
+  geom_line(data = curve_df_HF %>% filter(Length < 12 & Curve == "Female"),
+            aes(x = Length, y = R.HF), 
+            linewidth = 1, alpha = 1, colour = "#123c2e") +  # mean lines
+  geom_line(data = curve_df_HF %>% filter(Length >= 6 & Curve == "Male"), 
+            aes(x = Length, y = R.HF), 
+            linewidth =1, alpha = 1, linetype = "dashed", colour = "#eba8ad") +  # mean lines
+  
+  geom_point(aes(colour = P_fem_HF, fill = P_fem_HF,
+                 shape = factor(pd_detected)), size = 2, alpha = 0.8) +
+  # geom_text_repel(aes(label = label_show), 
+  #                box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
+  # Black outline only for "cert" points
+  geom_point(data = subset(dat, high_cert_HF == "cert"),
+             aes(x = Length, y = R.HF, 
+                 shape = factor(pd_detected), fill = NULL),
+             color = "black", stroke = 1, size = 2,  inherit.aes = FALSE) +
+  scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
+  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
+  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
+  geom_point(data = morpho.males, 
+             aes(x = Length, y = R.HF, colour = P_fem, fill = P_fem),
+             size = 2, 
+             shape = 23)+
+  theme_classic()+
+  geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
+            y = 0.413,
+            hjust = 0, size =2.5, inherit.aes = F)+
+  labs(title = "b)",
+       x = "Length (m)",
+       y = expression(NR[flipper]),      
+       fill = "P(f)",
+       size = "95% CI width",
+       shape = "PD observed")+ guides(colour = "none")
+
+
+
+
+ggsave("Figures/Final_Figures/Fig6_post_prob_models_simple_curves_HF.png",
        p6+labs(title = "")+guides(colour = "none"), width = 7, height = 4)
 
 
