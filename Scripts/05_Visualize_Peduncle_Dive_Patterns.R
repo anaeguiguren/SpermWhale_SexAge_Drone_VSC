@@ -57,7 +57,7 @@ whaling_lables <- data.frame(
 id.mean.p$cert_HF <- ifelse(id.mean.p$CI_width_HF<=0.05, "cert", "uncert")
 
 id.mean.p<- id.mean.p %>%
-  mutate(point_shape = ifelse(is.na(P_fem_HF), "known","unknown"))
+  mutate(point_shape = ifelse(!is.na(P_fem_HF), "known","unknown"))
 
 # Color scales for p_fem
 color_min <- min(id.mean.p$P_fem_HF, na.rm = TRUE)
@@ -68,11 +68,11 @@ p<- ggplot(id.mean.p, aes(x = factor(pd_detected), y = mean_TL))+
   geom_boxplot(outlier.shape = NA)+
   geom_jitter(aes(fill = P_fem_HF, shape = point_shape, colour=P_fem_HF), 
               width = 0.25, alpha = 0.8, size =2)+
- # geom_jitter(data = subset(id.mean.p, cert_HF == "cert"),
-  #            aes(y = mean_TL, fill = mean_fem_prob_hf, shape = point_shape), 
-   #           colour = "gray30",
-    #          width = 0.25, alpha = 0.8, size =3)+
-  scale_shape_manual(values = c("unknown" = 21, "known" = 8))+
+ #geom_jitter(data = subset(id.mean.p, cert_HF == "cert"),
+  #            aes(y = mean_TL, fill = P_fem_HF, shape = point_shape), 
+   #           colour = "black",
+    #          width = 0.25, alpha = 0.8, size =2, stroke = 1.5)+
+  scale_shape_manual(values = c("known" = 21, "unknown" = 8))+
   scale_fill_wa_c("puget", reverse = T, limits = c(color_min, color_max)) +
   scale_color_wa_c("puget", reverse = T, limits = c(color_min, color_max)) +
   geom_hline(yintercept = whaling_lables$Length, colour = "gray", linetype = "dashed")+
@@ -87,7 +87,10 @@ p
 ggsave("Figures/Final_Figures/Fig7_boxplot_peduncle_dives.png",
        p, width =7, height = 4)
 
-
+id.mean.p %>%
+  filter(pd_detected == "receiving", 
+         point_shape == "known", 
+         cert_HF == "uncert")
 
 #p_fem by age class:
 
