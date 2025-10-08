@@ -21,14 +21,24 @@ pd.videos<- suckles %>%
   group_by(video.File)%>%
   summarize(pd.checked = first(nursed))
 
+pd.videos <- pd.videos[-1,]
+
 # manually check NA videos - they probably just have one whale
 na.videos <- 
   pd.videos %>%
   filter(is.na(pd.checked))
 
 #4. make a copy of videos inspected ------
-#full name
+#make a full name
+pd.videos$full.video.File<- paste(
+  "E:/Gal2023_Drone/Drone_2023/",
+  substr(pd.videos$video.File, 22, 25), 
+  "2023/", 
+  pd.videos$video.File,
+  sep = ""
+)
 
-substr(pd.videos$video.File, 18, 25)
 
-pd.videos$video.File[-1]
+file.copy(from = pd.videos$full.video.File, 
+          to = "E:/Gal2023_Drone/Measured_Videos_for_pd_analysis/")
+
