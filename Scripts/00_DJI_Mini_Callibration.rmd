@@ -10,9 +10,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, include = FALSE}
-#setwd("/Documents/SpermWhale_SexAge_Drone_VSC")
+#setwd("C:/Users/balae/Documents/SpermWhale_SexAge_Drone_VSC/")#replace with local repo
 
-source("Scripts/00_DJI_Mini_Callibration_Data_Prep.R")
+#source("Scripts/00_DJI_Mini_Callibration_Data_Prep.R") Original data prep script
+dat <- read.csv("Data/Callibration_Data/Callibration_Data_clean.csv", header = T)
 library(ggplot2)
 library("wacolors")
 
@@ -30,7 +31,7 @@ dat$pixel.length <- px.length(l.m=dat$length,
                               p.d = dat$pixelDimension.old,
                               a.m = dat$altitude)
 
-dat<- dat %>% select(Date, FlightNo, imageName, timeStamp, altitudeRaw = altitude, imageWidth = ImageWidth, pixel.length, position = pos, nadir = nadir) 
+dat<- dat %>% select(Date, FlightNo, imageName, timeStamp, altitudeRaw = altitude, imageWidth = ImageWidth, pixel.length, nadir = nadir) 
 
 dat<- dat[-which(dat$nadir==F),]
 
