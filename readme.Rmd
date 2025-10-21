@@ -14,8 +14,7 @@ to increase nearly linearly with size (which ranges from 3.6 to 17 m).
 2. Estimate the posterior probability that each observed individual is a female
 3. Estimate credible intervals for curve parameters and posterior probabilities
 
-
-## Data 
+## Project Structure
 
 The project has the following directory structure:
 
@@ -23,20 +22,62 @@ The project has the following directory structure:
 SpermWhale_SexAge_Drone_VSC/
 ├── readme.Rmd              # Project documentation
 ├── Data/                  # Data directory
-│   ├── Callibration_Data/   # Cleaned morphometric measurements
-│       ├── Balaena_Raw_Measures.csv/   # output pixel dimensions for balaena. 
-│   └── id.morpho.output.clean.csv   # Cleaned morphometric measurements
-│   └── morpho.output.csv  
+│   ├── Callibration_Data/   # Calibration data for drone measurements
+│       ├── Balaena_Raw_Measures.csv   # Calibration object measurements
+│       ├── Snapshot_Metadata_2023.csv # Metadata for drone snapshots
+│   ├── Processed_Data/    # Cleaned and processed data
+│   ├── id.morpho.output.clean.csv   # Cleaned morphometric measurements
+│   └── morpho.output.csv  # Raw morphometric measurements
 └── Scripts/               # R scripts directory
     ├── functions.R       # Helper functions and utilities
-    └── model_sex_age.R   # Main analysis script for sex and age modeling
+    ├── 00_DJI_Mini_Callibration_Data_Prep.R    # Prepares calibration data
+    ├── 00_DJI_Mini_Callibration.rmd            # Analyzes calibration data
+    ├── 01_a_Nishiwaki1963_parameters.R         # Extracts prior parameters from literature
+    ├── 02_a_Data_Cleanup.R                     # Cleans raw morphometric data
+    ├── 02_b_Males_Data_Cleanup.R               # Processes known male measurements
+    ├── 03_a_Bootstrapped_Model_fitting.R       # Fits growth curves with bootstrapping
+    ├── 03_b_Model_Fitting_Means.R              # Fits growth curves to mean measurements
+    ├── 03_c_Estimate_Male_Fprobs.R             # Estimates probabilities for known males
+    ├── 04_a_Model_Visualizing.R                # Creates main visualizations
+    ├── 04_b_Bootstrapped_Model_Visualizing_Interactive_Plots.R # Creates interactive plots
+    ├── 05_Visualize_Peduncle_Dive_Patterns.R   # Analyzes diving behavior patterns
+    └── 06_Robustness_Checks.R                  # Tests model sensitivity
 ```
 
-### Data Files
-- `Data/morpho.output.csv`: Raw morphometric measurements including total length and nose-to-body ratio (R.hf)
-- `Data/id.morpho.output.clean.csv`: Cleaned and processed version of the morphometric data
+### Scripts Description
 
-### Scripts
-- `Scripts/functions.R`: Contains utility functions used in the analysis
-- `Scripts/model_sex_age.R`: Implements the Bayesian modeling approach for sex determination
+1. **Calibration (00_*)**: 
+   - Prepare and analyze drone measurement calibration data using a known-size object (Balaena)
+   - Calculate and apply correction factors for altitude and measurements
+
+2. **Data Preparation (01_* - 02_*)**: 
+   - Extract growth parameters from Nishiwaki 1963 literature for priors
+   - Clean and process morphometric measurements
+   - Process measurements from known males for validation
+
+3. **Model Fitting (03_*)**: 
+   - Implement bootstrapped parameter estimation
+   - Fit growth curves to mean measurements
+   - Calculate posterior probabilities
+
+4. **Visualization and Analysis (04_* - 06_*)**: 
+   - Generate main figures and plots
+   - Create interactive visualizations
+   - Analyze peduncle diving patterns
+   - Perform robustness checks on model assumptions
+
+### Key Data Files
+- `Data/morpho.output.csv`: Raw morphometric measurements
+- `Data/id.morpho.output.clean.csv`: Cleaned morphometric data with individual IDs
+- `Data/Callibration_Data/`: Contains drone calibration measurements and metadata
+- `Data/Processed_Data/`: Contains intermediate and final processed datasets
+
+### Dependencies
+The analysis requires the following R packages:
+- tidyverse: for data manipulation and visualization
+- ROCR: for model performance evaluation
+- PresenceAbsence: for confusion matrix calculations
+- plotly: for interactive visualizations
+- patchwork: for combining plots
+- wacolors: for color palettes
 
