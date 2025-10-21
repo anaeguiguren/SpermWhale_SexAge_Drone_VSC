@@ -1,18 +1,6 @@
-# Determining sperm whale sex from morphometric measurements
+# Determining sperm whale sex and developmental stage from morphometric measurements
 
 ## Summary
-I have a dataset that has the average morphometric measurements (total length and nose to body ratio R.hf)
-of sperm whales. I do not know the age or sex of the individuals. But I know that, at about 6m long, 
-the growth curves that relate total length to nose-to-body-ratio diverge for males and females.
-Specifically, while females (who range from 3.6 -12 m) follow a simple logistic curve in which the
-nose-to-body ratio realizes its asymptote. Conversely, the male nose-to-body ratio continues 
-to increase nearly linearly with size (which ranges from 3.6 to 17 m).
-
-
-## Aims
-1. Estimate the parameters for the male and female curves based on the data
-2. Estimate the posterior probability that each observed individual is a female
-3. Estimate credible intervals for curve parameters and posterior probabilities
 
 ## Project Structure
 
@@ -22,67 +10,30 @@ The project has the following directory structure:
 SpermWhale_SexAge_Drone_VSC/
 ├── readme.Rmd              # Project documentation
 ├── Data/                  # Data directory
-│   ├── Callibration_Data/   # Calibration data for drone measurements
-│       ├── Balaena_Raw_Measures.csv   # Calibration object measurements
-│       ├── Snapshot_Metadata_2023.csv # Metadata for drone snapshots
-│   ├── Processed_Data/    # Cleaned and processed data
-│   ├── id.morpho.output.clean.csv   # Cleaned morphometric measurements
-│   └── morpho.output.csv  # Raw morphometric measurements
+│   ├── Processed_Data/    # Cleaned and processed data used for analysis
 └── Scripts/               # R scripts directory
     ├── functions.R       # Helper functions for data processing and analysis
-    ├── 00_DJI_Mini_Callibration_Data_Prep.R    # Prepares calibration data from drone images
     ├── 00_DJI_Mini_Callibration.rmd            # Analyzes measurement error in drone data
-    ├── 01_a_Nishiwaki1963_parameters.R         # Extracts prior parameters from literature
-    ├── 02_a_Data_Cleanup.R                     # Cleans raw morphometric data from drone photos
-    ├── 02_b_Males_Data_Cleanup.R               # Processes measurements from known males
-    ├── 03_a_Bootstrapped_Model_fitting.R       # Fits growth curves with bootstrapping
-    ├── 03_b_Model_Fitting_Means.R              # Fits models to mean bootstrapped measurements
-    ├── 03_c_Estimate_Male_Fprobs.R             # Estimates female probabilities for males
-    ├── 04_a_Model_Visualizing.R                # Creates main result visualizations
-    ├── 04_b_Bootstrapped_Model_Visualizing_Interactive_Plots.R # Creates interactive plots
-    ├── 05_Visualize_Peduncle_Dive_Patterns.R   # Analyzes diving behavior by sex/size
-    └── 06_Robustness_Checks.R                  # Tests sensitivity to model assumptions
+    ├── 01_Nishiwaki1963_parameters.R         # Extracts prior parameters from literature
+    ├── 02_a_Bootstrapped_Model_fitting.R       # Fits growth curves with bootstrapping
+    ├── 02_b_Model_Fitting_Means.R              # Fits models to mean bootstrapped measurements
+    ├── 03_Estimate_Male_Fprobs.R             # Estimates female probabilities for males
+    ├── 04_Model_Visualizing.R                # Creates main result visualizations
+    ├── 05_Robustness_Checks.R                  # Tests sensitivity to model assumptions (priors and chm)
+    └── 06_Visualize_Peduncle_Dive_Patterns.R   # Visualizes peduncle diving behavior by sex/size
 
-### Scripts Description
 
-1. **Calibration and Data Preparation (00_* - 02_*)**: 
-   - Calibrate drone measurements using known-size object (Balaena)
-   - Apply altitude and measurement corrections
-   - Extract prior growth parameters from literature
-   - Process raw morphometric measurements
-   - Clean and validate measurements from known males
+## Data Files
 
-2. **Model Development (03_*)**: 
-   - Bootstrap data to estimate parameter uncertainty
-   - Fit separate growth curves for males and females
-   - Calculate posterior probabilities of sex assignment
-   - Validate model with known-sex individuals
+### Processed Data
+- `Data/Processed_Data/Callibration_Data_clean.csv`: clean measurements of callibration object (Balaena)
+- `Data/Processed_Data/males_nishiwaki`: Mean TL and nose to body ratio measures from males extracted from Nishiwaki et al.
+- `Data/Processed_Data/females_nishiwaki`: Mean TL and nose to body ratio measures from females extracted from Nishiwaki et al.
+- `Data/Processed_Data/nishiwaki_parameters.csv`: Extracted growth parameters from historical data
+- `Data/Processed_Data/id_morpho_output_clean_processed.csv`: Cleaned individual measurements and associated metadata
+- `Data/Processed_Data/NorthAtlantic_Males.csv`: Morphometric measurements of males from North Atlantic
 
-3. **Visualization and Analysis (04_*)**: 
-   - Generate publication-quality figures
-   - Create interactive visualizations for data exploration
-   - Plot growth curves with confidence intervals
-   - Visualize sex classification results
-
-4. **Behavioral Analysis and Validation (05_* - 06_*)**: 
-   - Analyze peduncle diving behavior patterns by sex/size class
-   - Test model sensitivity to key assumptions:
-     - Change point location
-     - Prior probability choices
-     - Measurement error effects
-
-### Key Data Files
-- `Data/morpho.output.csv`: Raw morphometric measurements
-- `Data/id.morpho.output.clean.csv`: Cleaned morphometric data with individual IDs
-- `Data/Callibration_Data/`: Contains drone calibration measurements and metadata
-- `Data/Processed_Data/`: Contains intermediate and final processed datasets
-
-### Dependencies
-The analysis requires the following R packages:
-- tidyverse: for data manipulation and visualization
-- ROCR: for model performance evaluation
-- PresenceAbsence: for confusion matrix calculations
-- plotly: for interactive visualizations
-- patchwork: for combining plots
-- wacolors: for color palettes
+### Intermediate Files
+- `bootstrapped_estimates.RData`: Bootstrapped model parameters and confidence intervals
+- `bootstrapped_estimates_plus_mean.RData`: parameter and p(fem) estimates based on bootsrapped means for each individual
 
