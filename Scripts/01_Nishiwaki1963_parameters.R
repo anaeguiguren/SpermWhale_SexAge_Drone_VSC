@@ -7,8 +7,8 @@ library(tidyverse)
 source("Scripts/functions.R")
 
 # 1. Read and clean data----
-m_dat <- read.csv("Data/males_nishiwaki.csv", header = F)
-f_dat <- read.csv("Data/females_nishiwaki.csv", header = F)
+m_dat <- read.csv("Data/Processed_Data/males_nishiwaki.csv", header = F)
+f_dat <- read.csv("Data/Processed_Data/females_nishiwaki.csv", header = F)
 
 # clean data and add sex column
 m_dat <- m_dat %>%
@@ -122,9 +122,6 @@ ggplot(all_dat, aes(x = Length, y = Ratio, color = Sex)) +
   scale_color_manual(values = c("Female" = fem_col, "Male" = mal_col)) +
   theme_classic()
 
-# Save plot
-ggsave("Figures/nishiwaki_fits.png", width = 8, height = 6)
-
 # 4. Calculate asymptotic ratios and growth rates----
 # These will be used as priors in the Bayesian model
 max_ratio_F <- female_params["fmax"]
@@ -138,4 +135,4 @@ params <- data.frame(
   Value = c(max_ratio_F, max_ratio_M, growth_rate_F, growth_rate_M)
 )
 
-write.csv(params, "Data/nishiwaki_parameters.csv", row.names = FALSE)
+write.csv(params, "Data/Processed_Data/nishiwaki_parameters.csv", row.names = FALSE)
