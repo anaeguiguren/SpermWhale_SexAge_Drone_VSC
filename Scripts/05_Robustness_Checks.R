@@ -19,7 +19,7 @@ dat<-dat %>%
 # 1. Load data ----
 #only rows that could be assigned individual IDs
 #clean_data <- read.csv("Data/Processed_Data/id_unpooled_clean_processed.csv") 
-nish <- read.csv("Data/nishiwaki_parameters.csv")
+nish <- read.csv("Data/Processed_Data/nishiwaki_parameters.csv")
 
 
 
