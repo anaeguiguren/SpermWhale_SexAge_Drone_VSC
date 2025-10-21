@@ -13,3 +13,4 @@ Scripts/shiny_app_find_nadir_range.R
 Scripts/Data_cleaning_scripts/
 Data/Processed_Data/archival_data/
 Data/Raw_Data/
+Results/
