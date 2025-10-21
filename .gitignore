@@ -1,5 +1,5 @@
 .Rproj.user
-.RData
+/.RData
 .Rhistory
 Data/Callibration_Data/FlightReader_Flight_logs.csv
 Data/Drone_Logs/Gal2023_Drone_Flight_Logs_srt.csv

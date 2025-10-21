@@ -11,7 +11,7 @@ source("Scripts/functions.R")
 
 # load males
 
-mad<-read.csv("Data/males_david.csv", header = T)
+mad<-read.csv("Data/Processed_Data/NorthAtlantic_Males.csv", header = T)
 mad
 
 
@@ -44,6 +44,7 @@ dat.m$P_fem <- f_probs(params = hf_params, data = dat.m)
 
 mad<-mad %>%
   mutate(Ratio = R.HF.m, 
+         
          Length = TL.m, ID = VideoFile)
 f_probs(params = hf_params, data = mad)#also super low
 #4. save dataset -----

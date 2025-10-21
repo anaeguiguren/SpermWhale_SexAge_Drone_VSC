@@ -14,7 +14,7 @@ load("bootstrapped_estimates.RData")
 
 
 #nishiwaki parameters from tip of snout to center of eye
-nish <- read.csv("Data/nishiwaki_parameters.csv", header = T)
+nish <- read.csv("Data/Processed_Data/nishiwaki_parameters.csv", header = T)
 
 
 #subset relevant columns:
