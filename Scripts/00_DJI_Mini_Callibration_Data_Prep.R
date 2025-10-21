@@ -3,12 +3,6 @@
 source("Scripts/functions.R")
 
 
-#a <- getMorphoMetrix(ROOTfolderpath = "/Users/anacristinaeguigurenburneo/Documents/Galapagos2023_Drone_Snapshots/Balaena_Callibrations/")
-#write.csv(a, "/Users/anacristinaeguigurenburneo/Documents/Galapagos_Fieldwork_2020s/Measurement_Error_Outputs/Balaena_Raw_Measures.csv")
-
-#a$imageName <- basename(a$imagePath)
-#get d
-
 # 1. import and clean data ----
 # morphometrix measurements:
 m <- read.csv("Data/Callibration_Data/Balaena_Raw_Measures.csv", header = TRUE)
@@ -128,3 +122,5 @@ head(dat)
 
 rm(a);rm(f);rm(m);rm(s)
 
+write.csv(dat, ""C:\Users\balae\Documents\SpermWhale_SexAge_Drone_VSC\Data\Callibration_Data\Snapshot_Metadata_2023.csv"")
+dat
