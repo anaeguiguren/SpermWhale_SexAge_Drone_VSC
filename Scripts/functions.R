@@ -249,15 +249,15 @@ optim_sex <- function(data, chm, exponential_male_growth = TRUE, pard0, weighted
 
 #~~~d. Estimate posterior probability of being female ----
 
-f_probs <- function(params, data, chm = 6, weighted = FALSE) {
-  res <- sumsq(params, data, chm)
+f_probs <- function(params, data, chm = 6, exponential_male_growth ,weighted = FALSE) {
+  res <- sumsq(params = params, data = data, chm = chm, exponential_male_growth = exponential_male_growth, weighted = weighted)
   likes <- exp(-res$likes / (2 * res$ss / (nrow(res$likes) - 1)))
   post_probs <- likes[, 1] / rowSums(likes)
   return(post_probs)
 }
 
-m_probs <- function(params, data, chm = 6, weighted = FALSE) {
-  res <- sumsq(params, data, chm)
+m_probs <- function(params, data, exponential_male_growth, chm = 6, weighted = FALSE) {
+  res <- sumsq(params = params, data = data, chm = chm, exponential_male_growth = exponential_male_growth, weighted = weighted)
   likes <- exp(-res$likes / (2 * res$ss / (nrow(res$likes) - 1)))
   post_probs <- likes[, 2] / rowSums(likes)
   return(post_probs)

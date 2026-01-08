@@ -42,34 +42,27 @@ cat("Number Identified whals:", length(levels(as.factor(dat_HF$ID))), "\n")
 n_boots <- 1000 # number of simulations
 
 
-#initialize lists to hold loop values
-
-#exponential
+#initialize lists to hold loop values (for exponential and linear versions of the male curve)
 
 boot_params_hd <-vector("list", n_boots) # parameters for HD ratio
 boot_params_hf <-vector("list", n_boots) # parameters for HF ratio
 
-
-#linear
-
 boot_params_hd_lin <-vector("list", n_boots) # parameters for HD ratio
 boot_params_hf_lin <-vector("list", n_boots) # parameters for HF ratio
 
+
 #sum of squares
 
-#exponential
-
 ss_hd <- vector("list", n_boots) 
 ss_hf <- vector("list", n_boots)
 
-#linear
-
-ss_hd <- vector("list", n_boots) 
-ss_hf <- vector("list", n_boots)
+ss_hd_lin <- vector("list", n_boots) 
+ss_hf_lin <- vector("list", n_boots)
 
 #individual estimates of p_fem
-dat_boot <- vector("list", n_boots) #exponential
-dat_boot_lin <- vector("list", n_boots) #linear
+dat_boot <- vector("list", n_boots)
+dat_boot_lin <- vector("list", n_boots) 
+
 
 
 for(i in 1:n_boots){
@@ -80,26 +73,44 @@ for(i in 1:n_boots){
     group_by(ID) %>%
     slice_sample(n = 1)
   
-  
-  hd.temp <- optim_sex(tmp.dat %>% mutate(Ratio = R.HD),
+  hd.temp <- optim_sex(data = tmp.dat %>% mutate(Ratio = R.HD),
                       chm = 6, 
-                      pard0 = c(nish$Value[3],
-                                nish$Value[1],
-                                nish$Value[4],
-                                nish$Value[2],
-                                nish$Value[5]), 
-                      exponential_male_growth = FALSE,
+                      pard0 = c(fmax = nish$Value[1], 
+                                fr = nish$Value[3], 
+                                mmax = nish$Value[2], 
+                                mr = nish$Value[4]), 
+                      exponential_male_growth = TRUE,
                       weighted = FALSE)
+  
+  hd.temp.lin <- optim_sex(data = tmp.dat %>% mutate(Ratio = R.HD),
+                           chm = 6, 
+                           pard0 = c(fmax = nish$Value[1], 
+                                     fr = nish$Value[3], 
+                                     mr_l = nish$Value[5]), 
+                           exponential_male_growth = FALSE,
+                           weighted = FALSE)
+  
+  
   
   hf.temp <- optim_sex(tmp.dat %>% mutate(Ratio = R.HF),
                        chm = 6, 
-                       pard0 =  c(nish$Value[3],
-                                  nish$Value[1],
-                                  nish$Value[4],
-                                  nish$Value[2],
-                                  nish$Value[5]), 
+                       pard0 =  c(fmax = nish$Value[1], 
+                                  fr = nish$Value[3], 
+                                  mmax = nish$Value[2], 
+                                  mr = nish$Value[4]), 
+                       exponential_male_growth = TRUE,
                        weighted = FALSE)
   
+  hf.temp.lin <- optim_sex(tmp.dat %>% mutate(Ratio = R.HF),
+                       chm = 6, 
+                       pard0 =  c(fmax = nish$Value[1], 
+                                  fr = nish$Value[3], 
+                                  mr_l = nish$Value[5]), 
+                       exponential_male_growth = FALSE,
+                       weighted = FALSE)
+  
+  
+  #exponential
   tmp.dat$fem_prob_hd <- f_probs(hd.temp$params, data = tmp.dat %>% mutate(Ratio = R.HD))
   
   tmp.dat$fem_prob_hf <- f_probs(hf.temp$params, data = tmp.dat %>% mutate(Ratio = R.HF))
@@ -108,6 +119,19 @@ for(i in 1:n_boots){
   tmp.dat$m_prob_hd <- m_probs(hd.temp$params, data = tmp.dat %>% mutate(Ratio = R.HD))
   
   tmp.dat$m_prob_hf <- m_probs(hf.temp$params, data = tmp.dat %>% mutate(Ratio = R.HF))
+  
+  #linear
+  tmp.dat$fem_prob_hd_lin <- f_probs(hd.temp.lin$params, data = tmp.dat %>% mutate(Ratio = R.HD))
+  
+  tmp.dat$fem_prob_hf_lin <- f_probs(hf.temp.lin$params, data = tmp.dat %>% mutate(Ratio = R.HF))
+  
+  
+  tmp.dat$m_prob_hd_lin <- m_probs(hd.temp.lin$params, data = tmp.dat %>% mutate(Ratio = R.HD))
+  
+  tmp.dat$m_prob_hf_lin <- m_probs(hf.temp.lin$params, data = tmp.dat %>% mutate(Ratio = R.HF))
+  
+  
+  
   
   #save:
   
