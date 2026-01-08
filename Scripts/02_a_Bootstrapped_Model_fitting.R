@@ -44,14 +44,32 @@ n_boots <- 1000 # number of simulations
 
 #initialize lists to hold loop values
 
+#exponential
+
 boot_params_hd <-vector("list", n_boots) # parameters for HD ratio
 boot_params_hf <-vector("list", n_boots) # parameters for HF ratio
 
-ss_hd <- vector("list", n_boots) #sum of squares
+
+#linear
+
+boot_params_hd_lin <-vector("list", n_boots) # parameters for HD ratio
+boot_params_hf_lin <-vector("list", n_boots) # parameters for HF ratio
+
+#sum of squares
+
+#exponential
+
+ss_hd <- vector("list", n_boots) 
 ss_hf <- vector("list", n_boots)
 
+#linear
 
-dat_boot <- vector("list", n_boots) #individual estimates of p_fem
+ss_hd <- vector("list", n_boots) 
+ss_hf <- vector("list", n_boots)
+
+#individual estimates of p_fem
+dat_boot <- vector("list", n_boots) #exponential
+dat_boot_lin <- vector("list", n_boots) #linear
 
 
 for(i in 1:n_boots){
@@ -78,7 +96,9 @@ for(i in 1:n_boots){
                        pard0 =  c(nish$Value[3],
                                   nish$Value[1],
                                   nish$Value[4],
-                                  nish$Value[2]), weighted = FALSE)
+                                  nish$Value[2],
+                                  nish$Value[5]), 
+                       weighted = FALSE)
   
   tmp.dat$fem_prob_hd <- f_probs(hd.temp$params, data = tmp.dat %>% mutate(Ratio = R.HD))
   

@@ -143,7 +143,7 @@ fem_curve <- function(length, fr, fmax) {
   fmax * exp(fr * length) / (1 + exp(fr * length))
 }
 
-#Hal's version
+#Exponential version of male growth 
 mal_curve <- function(length, fr, fmax, mr, mmax, chm){
    fmax * exp(fr * pmin(length, chm)) / (1 + exp(fr * pmin(length, chm))) +
      (length > chm) * mmax *
@@ -153,7 +153,7 @@ mal_curve <- function(length, fr, fmax, mr, mmax, chm){
      )
  }
 
-# linear male curve:
+#Linear version of male growth
 mal_curve_l <- function(length, fr, fmax, mr_l, chm){
   fmax * exp(fr * pmin(length, chm)) / (1 + exp(fr * pmin(length, chm))) +
     (length > chm) * mr_l * (length - chm)
@@ -162,22 +162,27 @@ mal_curve_l <- function(length, fr, fmax, mr_l, chm){
 #~~~b. Estimate sum of squares ----
 
 sumsq <- function(params, data, chm, exponential_male_growth = TRUE, weighted = FALSE){
-  fr <- params[1]
-  fmax <- params[2]
-  mr <- params[3]
-  mmax <- params[4]
-  mr_l <- params[5]
-
+  
+  #female growth curve
+  
+  fr <- params["fr"]
+  fmax <- params["fmax"]
+  
   preds_f <- fem_curve(data$Length, fr, fmax)
+  
+  #male growth curve
   
   #determine if linear or exponential version of male curve is used:
   if(exponential_male_growth){
+    mr <- params["mr"]
+    mmax <- params["mmax"]
     preds_m <- mal_curve(data$Length, fr, fmax, mr, mmax, chm)#exponential version
   }else{
-    preds_m <- mal_curve_l(data$Length, frm, fmax, mr_l, chm )
+    mr_l <- params["mr_l"]
+    preds_m <- mal_curve_l(data$Length, fr, fmax, mr_l, chm )
   }
   
-
+  
   resid_f <- (data$Ratio - preds_f)^2 # female squared residuals
   resid_m <- (data$Ratio - preds_m)^2 # male squared residuals
   residuals <- pmin(resid_f, resid_m) # returns the minimum of each curve for each data point
@@ -196,17 +201,30 @@ sumsq <- function(params, data, chm, exponential_male_growth = TRUE, weighted = 
 
 
 
+
+
+
 #~~~c. Fit parameters using optim ----
 optim_sex <- function(data, chm, exponential_male_growth = TRUE, pard0, weighted = FALSE){
+  
   objfun <- function(p) {
-    #if(p[2] > p[4]) return(1e12)  # penalty if fmax >= mmax
-    if(p[3] <0 ) return(1e12)  # penalty if fmax >= mmax
+    
+    
+    if(p[3] < 0 ) return(1e12)  # penalty if fmax >= mmax
     
     val <- tryCatch({
       if(weighted) {
-        sumsq(p, data , exponential_male_growth, chm, TRUE)
+        sumsq(params = p, 
+              data = data , 
+              exponential_male_growth = exponential_male_growth, 
+              chm = chm, 
+              weighted = TRUE)
       } else {
-        sumsq(p, data , exponential_male_growth, chm, FALSE)$ss
+        sumsq(params = p, 
+              data = data, 
+              exponential_male_growth = exponential_male_growth,
+              chm = chm, 
+              weighted = FALSE)$ss
       }
     }, error = function(e) 1e12)
     
@@ -214,21 +232,16 @@ optim_sex <- function(data, chm, exponential_male_growth = TRUE, pard0, weighted
     return(val)
   }
   
-  fit <- optim(pard0, objfun, 
+  fit <- optim(par = pard0, 
+               objfun, 
                control= list(maxit = 205000),
                method = "BFGS")
   
-  params<- fit$par
-  ss <- fit$value
-  
-  cat(ifelse(weighted, "Weighted SS", "Unweighted SS"), "\n")
-  cat(sprintf("Sum of squares: %6.4f\n", ss)) #what are these percentages about?
-  cat(sprintf("Fitted parameters: fr = %5.2f, fmax = %5.2f, mr = %5.2f, mmax = %5.2f\n",
-              params[1], params[2], params[3], params[4]))
-  
-  list(params = params, ss = ss, fit = fit)
-  
-  
+  list(
+    params = fit$par,
+    ss = fit$value,
+    fit = fit
+  )
 }
 
 
