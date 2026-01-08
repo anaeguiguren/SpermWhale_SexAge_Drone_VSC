@@ -154,7 +154,7 @@ mal_curve <- function(length, fr, fmax, mr, mmax, chm){
  }
 
 # linear male curve:
-mal_curve_l <- function(length, fr, fmax, mr, mmax, chm){
+mal_curve_l <- function(length, fr, fmax, mr, chm){
   fmax * exp(fr * pmin(length, chm)) / (1 + exp(fr * pmin(length, chm))) +
     (length > chm) * mr * (length - chm)
 }
