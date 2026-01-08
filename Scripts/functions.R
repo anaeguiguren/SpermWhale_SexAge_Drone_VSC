@@ -154,22 +154,30 @@ mal_curve <- function(length, fr, fmax, mr, mmax, chm){
  }
 
 # linear male curve:
-mal_curve_l <- function(length, fr, fmax, mr, chm){
+mal_curve_l <- function(length, fr, fmax, mr_l, chm){
   fmax * exp(fr * pmin(length, chm)) / (1 + exp(fr * pmin(length, chm))) +
-    (length > chm) * mr * (length - chm)
+    (length > chm) * mr_l * (length - chm)
 }
 
 #~~~b. Estimate sum of squares ----
 
-sumsq <- function(params, data, chm , weighted = FALSE){
+sumsq <- function(params, data, chm, exponential_male_growth = TRUE, weighted = FALSE){
   fr <- params[1]
   fmax <- params[2]
   mr <- params[3]
   mmax <- params[4]
-  
+  mr_l <- params[5]
+
   preds_f <- fem_curve(data$Length, fr, fmax)
-  preds_m <- mal_curve(data$Length, fr, fmax, mr, mmax, chm)
   
+  #determine if linear or exponential version of male curve is used:
+  if(exponential_male_growth){
+    preds_m <- mal_curve(data$Length, fr, fmax, mr, mmax, chm)#exponential version
+  }else{
+    preds_m <- mal_curve_l(data$Length, frm, fmax, mr_l, chm )
+  }
+  
+
   resid_f <- (data$Ratio - preds_f)^2 # female squared residuals
   resid_m <- (data$Ratio - preds_m)^2 # male squared residuals
   residuals <- pmin(resid_f, resid_m) # returns the minimum of each curve for each data point
@@ -187,17 +195,18 @@ sumsq <- function(params, data, chm , weighted = FALSE){
 }
 
 
+
 #~~~c. Fit parameters using optim ----
-optim_sex <- function(data, chm,  pard0, weighted = FALSE){
+optim_sex <- function(data, chm, exponential_male_growth = TRUE, pard0, weighted = FALSE){
   objfun <- function(p) {
     #if(p[2] > p[4]) return(1e12)  # penalty if fmax >= mmax
     if(p[3] <0 ) return(1e12)  # penalty if fmax >= mmax
     
     val <- tryCatch({
       if(weighted) {
-        sumsq(p, data , chm, TRUE)
+        sumsq(p, data , exponential_male_growth, chm, TRUE)
       } else {
-        sumsq(p, data , chm, FALSE)$ss
+        sumsq(p, data , exponential_male_growth, chm, FALSE)$ss
       }
     }, error = function(e) 1e12)
     

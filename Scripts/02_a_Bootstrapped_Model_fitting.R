@@ -11,6 +11,7 @@ set.seed(1234567)
 #only rows that could be assigned individual IDs
 clean_data <- read.csv("Data/Processed_Data/id_unpooled_clean_processed.csv") 
 nish <- read.csv("Data/Processed_Data/nishiwaki_parameters.csv")
+
 # subset relevant columns
 dat<- clean_data %>%
   select(ID, Length = TL.m, 
