@@ -68,7 +68,10 @@ for(i in 1:n_boots){
                       pard0 = c(nish$Value[3],
                                 nish$Value[1],
                                 nish$Value[4],
-                                nish$Value[2]), weighted = FALSE)
+                                nish$Value[2],
+                                nish$Value[5]), 
+                      exponential_male_growth = FALSE,
+                      weighted = FALSE)
   
   hf.temp <- optim_sex(tmp.dat %>% mutate(Ratio = R.HF),
                        chm = 6, 
