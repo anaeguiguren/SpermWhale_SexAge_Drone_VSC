@@ -153,6 +153,11 @@ mal_curve <- function(length, fr, fmax, mr, mmax, chm){
      )
  }
 
+# linear male curve:
+mal_curve_l <- function(length, fr, fmax, mr, mmax, chm){
+  fmax * exp(fr * pmin(length, chm)) / (1 + exp(fr * pmin(length, chm))) +
+    (length > chm) * mr * (length - chm)
+}
 
 #~~~b. Estimate sum of squares ----
 
@@ -165,9 +170,9 @@ sumsq <- function(params, data, chm , weighted = FALSE){
   preds_f <- fem_curve(data$Length, fr, fmax)
   preds_m <- mal_curve(data$Length, fr, fmax, mr, mmax, chm)
   
-  resid_f <- (data$Ratio - preds_f)^2 #female squared residuals
+  resid_f <- (data$Ratio - preds_f)^2 # female squared residuals
   resid_m <- (data$Ratio - preds_m)^2 # male squared residuals
-  residuals <- pmin(resid_f, resid_m) #returns the minimum of each curve for each data point
+  residuals <- pmin(resid_f, resid_m) # returns the minimum of each curve for each data point
   
   
   #when weighted by SD:
