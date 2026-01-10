@@ -159,6 +159,8 @@ mal_curve_l <- function(length, fr, fmax, mr_l, chm){
     (length > chm) * mr_l * (length - chm)
 }
 
+
+
 #~~~b. Estimate sum of squares ----
 
 sumsq <- function(params, data, chm, exponential_male_growth = TRUE, weighted = FALSE){
@@ -207,10 +209,21 @@ sumsq <- function(params, data, chm, exponential_male_growth = TRUE, weighted = 
 #~~~c. Fit parameters using optim ----
 optim_sex <- function(data, chm, exponential_male_growth = TRUE, pard0, weighted = FALSE){
   
+  mr_l_max <- 0.2   # max biologically plausible slope (nish*3)
+  mr_l_min <- 0.001      # growth must go above female 
+  
+  
   objfun <- function(p) {
     
-    
-    if(p[3] < 0 ) return(1e12)  # penalty if fmax >= mmax
+    if(exponential_male_growth){
+      if(p["mmax"] < 0 ) return(1e12)  # penalty if fmax >= mmax
+    }
+
+    if (!exponential_male_growth) {
+      if (p["mr_l"] < mr_l_min || p["mr_l"] > mr_l_max) #bound within reason to stop optimizer from dropping male curve
+        return(1e12)
+      
+    }
     
     val <- tryCatch({
       if(weighted) {

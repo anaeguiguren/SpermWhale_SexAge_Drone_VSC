@@ -33,6 +33,7 @@ summary_data<-dat_HF %>%
   group_by(ID)%>%
   summarize(n_photos = n())
 
+cat("Number Identified whals:", length(levels(as.factor(dat$ID))), "\n")
 
 #how many individuals
 cat("Number Identified whals:", length(levels(as.factor(dat_HF$ID))), "\n")
@@ -111,25 +112,56 @@ for(i in 1:n_boots){
   
   
   #exponential
-  tmp.dat$fem_prob_hd <- f_probs(hd.temp$params, data = tmp.dat %>% mutate(Ratio = R.HD))
+  tmp.dat$fem_prob_hd <- f_probs(params = hd.temp$params, 
+                                 data = tmp.dat %>% mutate(Ratio = R.HD),
+                                 chm = 6, 
+                                 exponential_male_growth = TRUE, 
+                                 weighted = FALSE)
   
-  tmp.dat$fem_prob_hf <- f_probs(hf.temp$params, data = tmp.dat %>% mutate(Ratio = R.HF))
+  tmp.dat$fem_prob_hf <- f_probs(params = hf.temp$params, 
+                                 data = tmp.dat %>% mutate(Ratio = R.HF),
+                                 chm = 6, 
+                                 exponential_male_growth = TRUE, 
+                                 weighted = FALSE)
   
   
-  tmp.dat$m_prob_hd <- m_probs(hd.temp$params, data = tmp.dat %>% mutate(Ratio = R.HD))
+  tmp.dat$m_prob_hd <- m_probs(params = hd.temp$params, 
+                               data = tmp.dat %>% mutate(Ratio = R.HD), 
+                               chm = 6, 
+                               exponential_male_growth = TRUE, 
+                               weighted = FALSE)
   
-  tmp.dat$m_prob_hf <- m_probs(hf.temp$params, data = tmp.dat %>% mutate(Ratio = R.HF))
+  tmp.dat$m_prob_hf <- m_probs(params = hf.temp$params, 
+                               data = tmp.dat %>% mutate(Ratio = R.HF),
+                               chm = 6, 
+                               exponential_male_growth = TRUE, 
+                               weighted = FALSE)
   
   #linear
-  tmp.dat$fem_prob_hd_lin <- f_probs(hd.temp.lin$params, data = tmp.dat %>% mutate(Ratio = R.HD))
+  tmp.dat$fem_prob_hd_lin <- f_probs(params = hd.temp.lin$params, 
+                                 data = tmp.dat %>% mutate(Ratio = R.HD),
+                                 chm = 6, 
+                                 exponential_male_growth = FALSE, 
+                                 weighted = FALSE)
   
-  tmp.dat$fem_prob_hf_lin <- f_probs(hf.temp.lin$params, data = tmp.dat %>% mutate(Ratio = R.HF))
+  tmp.dat$fem_prob_hf_lin <- f_probs(params = hf.temp.lin$params, 
+                                 data = tmp.dat %>% mutate(Ratio = R.HF),
+                                 chm = 6, 
+                                 exponential_male_growth = FALSE, 
+                                 weighted = FALSE)
   
   
-  tmp.dat$m_prob_hd_lin <- m_probs(hd.temp.lin$params, data = tmp.dat %>% mutate(Ratio = R.HD))
+  tmp.dat$m_prob_hd_lin <- m_probs(params = hd.temp.lin$params, 
+                               data = tmp.dat %>% mutate(Ratio = R.HD), 
+                               chm = 6, 
+                               exponential_male_growth = FALSE, 
+                               weighted = FALSE)
   
-  tmp.dat$m_prob_hf_lin <- m_probs(hf.temp.lin$params, data = tmp.dat %>% mutate(Ratio = R.HF))
-  
+  tmp.dat$m_prob_hf_lin <- m_probs(params = hf.temp.lin$params, 
+                               data = tmp.dat %>% mutate(Ratio = R.HF),
+                               chm = 6, 
+                               exponential_male_growth = FALSE, 
+                               weighted = FALSE)
   
   
   
