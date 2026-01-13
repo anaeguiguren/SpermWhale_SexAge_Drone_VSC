@@ -42,7 +42,9 @@ hd.temp <- optim_sex(data = tmp.dat %>% mutate(Ratio = R.HD),
                      exponential_male_growth = TRUE,
                      weighted = FALSE)
 
+hd.temp$params
 hd.temp$ss
+
 
 
 hd.temp.lin <- optim_sex(data = tmp.dat %>% mutate(Ratio = R.HD),
@@ -108,7 +110,49 @@ ggplot(data = fem_line, aes(x = Length, y = Ratio)) +
   geom_abline(slope = slope, intercept = intercept, 
               color = "red", linetype = "dashed") +
   geom_point(aes(x = 6, y = y0), color = "red", size = 3) +
-  labs(x = "Length", y = "Value")
+  labs(x = "Length", y = "Value")+
+  ylim(0.62, 0.73)
+
+# this is ok...but maybe too high?
+
+# 4. try a linear curve that goes from NR(chm) to NR(18) (i.e., fmax)----
+#nr at length = chm
+y_chm <- fem_curve(length = 6, 
+                fr = unname(hd.temp.lin$params["fr"]), 
+                fmax = unname(hd.temp.lin$params["fmax"]))
+
+#nr at length = 18m ~ fmax (identical!)
+y_max <- fem_curve(length = 18, 
+                   fr = unname(hd.temp.lin$params["fr"]), 
+                   fmax = unname(hd.temp.lin$params["fmax"]))
+
+
+# estimate a minimal slope
+slope_min <- 2 *  (y_max - y_chm) / (18 - 6)
+
+
+
+y_intercept <- y_chm - (slope_min * 6)
+
+
+
+
+# add this line to plot:
+# add line to plot
+ggplot(data = fem_line, aes(x = Length, y = Ratio)) +
+  geom_line()+
+  geom_abline(slope = slope, intercept = intercept, 
+              color = "red", linetype = "dashed") +
+  geom_point(aes(x = 6, y = y0), color = "red", size = 3) +
+  geom_abline(slope = slope_min, intercept = y_intercept, 
+              color = "blue", linetype = "dashed")+
+  labs(x = "Length", y = "Value")+
+  ylim(0.62, 0.73)
+
+
+
+
+  
 
 
 mal_line <- data.frame(Length = length_seq, 

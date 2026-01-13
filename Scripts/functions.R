@@ -139,15 +139,22 @@ measureWhales<- function(image.width, altitude, length.pixels){
 # 5. Optimizing growth curve parameters ----
 
 #~~~a. Define female and male curve shapes ----
+
+#female curve:
 fem_curve <- function(length, fr, fmax) {
   fmax * exp(fr * length) / (1 + exp(fr * length))
 }
 
 
-#gets slope of female curve at chm (for constraining linear male curve)
-fem_dv <- function(chm, fr, fmax) {
+#female curve min slope (minimum bound for the linear male curve)
+#multiplied by 2 to ensure male curve lies above female curve
+min_slope <- function(chm = 6, fr, fmax) {
+  y_chm <- fem_curve(length = chm, fr = fr, fmax = fmax)
+  y_max <- fem_curve(length = 18, fr = fr, fmax = fmax)
   
+  2 * (y_max - y_chm) / (18 - chm)
 }
+
 
 #Exponential version of male growth 
 mal_curve <- function(length, fr, fmax, mr, mmax, chm){
@@ -157,7 +164,9 @@ mal_curve <- function(length, fr, fmax, mr, mmax, chm){
        exp(mr * length) / (1 + exp(mr * length)) -
          exp(mr * chm) / (1 + exp(mr * chm))
      )
- }
+}
+
+
 
 #Linear version of male growth
 mal_curve_l <- function(length, fr, fmax, mr_l, chm){
