@@ -143,6 +143,12 @@ fem_curve <- function(length, fr, fmax) {
   fmax * exp(fr * length) / (1 + exp(fr * length))
 }
 
+
+#gets slope of female curve at chm (for constraining linear male curve)
+fem_dv <- function(chm, fr, fmax) {
+  
+}
+
 #Exponential version of male growth 
 mal_curve <- function(length, fr, fmax, mr, mmax, chm){
    fmax * exp(fr * pmin(length, chm)) / (1 + exp(fr * pmin(length, chm))) +
@@ -175,11 +181,16 @@ sumsq <- function(params, data, chm, exponential_male_growth = TRUE, weighted = 
   #male growth curve
   
   #determine if linear or exponential version of male curve is used:
+  
+  #exponential version
   if(exponential_male_growth){
     mr <- params["mr"]
     mmax <- params["mmax"]
-    preds_m <- mal_curve(data$Length, fr, fmax, mr, mmax, chm)#exponential version
-  }else{
+    preds_m <- mal_curve(data$Length, fr, fmax, mr, mmax, chm)
+  }
+  
+  #linear version
+  else{
     mr_l <- params["mr_l"]
     preds_m <- mal_curve_l(data$Length, fr, fmax, mr_l, chm )
   }
