@@ -240,7 +240,12 @@ optim_sex <- function(data, chm, exponential_male_growth = TRUE, pard0, weighted
     }
 
     if (!exponential_male_growth) {
-      if (p["mr_l"] < mr_l_min || p["mr_l"] > mr_l_max) #bound within reason to stop optimizer from dropping male curve
+      
+      #bound within reason to stop optimizer from dropping male curve and ensure
+      #mr_l is higher than min_slope based on female parameters
+      min_sl <- min_slope(chm = chm, fr = fr, fmax = fmax)
+      
+      if (p["mr_l"] < pmin(mr_l_min, min_sl) || p["mr_l"] > mr_l_max)
         return(1e12)
       
     }
