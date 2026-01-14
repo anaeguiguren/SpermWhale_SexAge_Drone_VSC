@@ -226,12 +226,11 @@ sumsq <- function(params, data, chm, exponential_male_growth = TRUE, weighted = 
 
 
 
-#~~~c. Fit parameters using optim ----
+#~~~c. Find parameters using optim ----
 optim_sex <- function(data, chm, exponential_male_growth = TRUE, pard0, weighted = FALSE){
   
   mr_l_max <- 0.2   # max biologically plausible slope (nish*3)
-  mr_l_min <- 0.001      # growth must go above female 
-  
+
   
   objfun <- function(p) {
     
@@ -243,9 +242,17 @@ optim_sex <- function(data, chm, exponential_male_growth = TRUE, pard0, weighted
       
       #bound within reason to stop optimizer from dropping male curve and ensure
       #mr_l is higher than min_slope based on female parameters
-      min_sl <- min_slope(chm = chm, fr = fr, fmax = fmax)
+      min_sl <- min_slope(chm = chm, fr = p['fr'], fmax = p['fmax'])
       
-      if (p["mr_l"] < pmin(mr_l_min, min_sl) || p["mr_l"] > mr_l_max)
+      if (is.na(p["mr_l"]) || is.na(min_sl)) {
+        print("NA detected")
+        print(p)
+        print(min_sl)
+        return(1e12)
+      }
+      
+      
+      if (p["mr_l"] < min_sl || p["mr_l"] > mr_l_max)
         return(1e12)
       
     }
