@@ -48,21 +48,13 @@ n_boots <- 1000 # number of simulations
 boot_params_hd <-vector("list", n_boots) # parameters for HD ratio
 boot_params_hf <-vector("list", n_boots) # parameters for HF ratio
 
-boot_params_hd_lin <-vector("list", n_boots) # parameters for HD ratio
-boot_params_hf_lin <-vector("list", n_boots) # parameters for HF ratio
-
-
 #sum of squares
 
 ss_hd <- vector("list", n_boots) 
 ss_hf <- vector("list", n_boots)
 
-ss_hd_lin <- vector("list", n_boots) 
-ss_hf_lin <- vector("list", n_boots)
-
 #individual estimates of p_fem
 dat_boot <- vector("list", n_boots)
-dat_boot_lin <- vector("list", n_boots) 
 
 
 
@@ -83,15 +75,6 @@ for(i in 1:n_boots){
                       exponential_male_growth = TRUE,
                       weighted = FALSE)
   
-  hd.temp.lin <- optim_sex(data = tmp.dat %>% mutate(Ratio = R.HD),
-                           chm = 6, 
-                           pard0 = c(fmax = nish$Value[1], 
-                                     fr = nish$Value[3], 
-                                     mr_l = nish$Value[5]), 
-                           exponential_male_growth = FALSE,
-                           weighted = FALSE)
-  
-  
   
   hf.temp <- optim_sex(tmp.dat %>% mutate(Ratio = R.HF),
                        chm = 6, 
@@ -102,14 +85,7 @@ for(i in 1:n_boots){
                        exponential_male_growth = TRUE,
                        weighted = FALSE)
   
-  hf.temp.lin <- optim_sex(tmp.dat %>% mutate(Ratio = R.HF),
-                       chm = 6, 
-                       pard0 =  c(fmax = nish$Value[1], 
-                                  fr = nish$Value[3], 
-                                  mr_l = nish$Value[5]), 
-                       exponential_male_growth = FALSE,
-                       weighted = FALSE)
-  
+
   
   #exponential
   tmp.dat$fem_prob_hd <- f_probs(params = hd.temp$params, 
@@ -135,32 +111,6 @@ for(i in 1:n_boots){
                                data = tmp.dat %>% mutate(Ratio = R.HF),
                                chm = 6, 
                                exponential_male_growth = TRUE, 
-                               weighted = FALSE)
-  
-  #linear
-  tmp.dat$fem_prob_hd_lin <- f_probs(params = hd.temp.lin$params, 
-                                 data = tmp.dat %>% mutate(Ratio = R.HD),
-                                 chm = 6, 
-                                 exponential_male_growth = FALSE, 
-                                 weighted = FALSE)
-  
-  tmp.dat$fem_prob_hf_lin <- f_probs(params = hf.temp.lin$params, 
-                                 data = tmp.dat %>% mutate(Ratio = R.HF),
-                                 chm = 6, 
-                                 exponential_male_growth = FALSE, 
-                                 weighted = FALSE)
-  
-  
-  tmp.dat$m_prob_hd_lin <- m_probs(params = hd.temp.lin$params, 
-                               data = tmp.dat %>% mutate(Ratio = R.HD), 
-                               chm = 6, 
-                               exponential_male_growth = FALSE, 
-                               weighted = FALSE)
-  
-  tmp.dat$m_prob_hf_lin <- m_probs(params = hf.temp.lin$params, 
-                               data = tmp.dat %>% mutate(Ratio = R.HF),
-                               chm = 6, 
-                               exponential_male_growth = FALSE, 
                                weighted = FALSE)
   
   
