@@ -141,8 +141,13 @@ measureWhales<- function(image.width, altitude, length.pixels){
 #~~~a. Define female and male curve shapes ----
 
 #female curve:
+#fem_curve <- function(length, fr, fmax) {
+ # fmax * exp(fr * length) / (1 + exp(fr * length))
+#}
+
+#female curve: equivalent but numerically stable:
 fem_curve <- function(length, fr, fmax) {
-  fmax * exp(fr * length) / (1 + exp(fr * length))
+  fmax / (1 + exp(-fr * length))
 }
 
 
@@ -242,7 +247,7 @@ optim_sex <- function(data, chm, exponential_male_growth = TRUE, pard0, weighted
       
       #bound within reason to stop optimizer from dropping male curve and ensure
       #mr_l is higher than min_slope based on female parameters
-      min_sl <- min_slope(chm = chm, fr = p['fr'], fmax = p['fmax'])
+      min_sl <- unname(min_slope(chm = chm, fr = p['fr'], fmax = p['fmax']))
       
       if (is.na(p["mr_l"]) || is.na(min_sl)) {
         print("NA detected")
