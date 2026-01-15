@@ -151,9 +151,10 @@ ci.w<-long_centered %>%
   scale_fill_grey(start = 0.3, end = 0.7) +
   labs(y = "95% Confidence interval width", x = "") +
   theme_bw()
+ci.w
 
-#ggsave("Figures/Final_Figures/Sup_FigS3_1_boxplot_NR_CI_Widths.png",
-#       ci.w, width = 5, height = 5)
+ggsave("Figures/Final_Figures/Sup_FigS3_1_boxplot_NR_CI_Widths.png",
+       ci.w, width = 5, height = 5)
 
 #ci.w<-long_centered %>%
  # mutate(width = hi - low)
@@ -393,13 +394,13 @@ dat%>%
 
 
 dat %>%
-  filter(pd_detected == "receiving" & high_cert_HF.x == "uncert") %>%
+  filter(pd_detected == "receiving" & high_cert_HF == "uncert") %>%
   select(short_ID, P_fem_HF, prob_hf_CI_low, prob_hf_CI_hi)
 
 
 
 dat %>%
-  filter(pd_detected == "receiving" & high_cert_HF.x == "cert") %>%
+  filter(pd_detected == "receiving" & high_cert_HF == "cert") %>%
   select(short_ID, P_fem_HF, prob_hf_CI_low, prob_hf_CI_hi)
 
 
@@ -407,45 +408,67 @@ dat %>%
 
 p1 <- ggplot(dat, aes(x = Length, y = R.HD)) +
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed") + 
-  geom_point(aes(colour = P_fem_HD, fill = P_fem_HD,
-                 shape = factor(pd_detected)), size = 2, alpha = 0.9) +
-  # Black outline only for "cert" points
+  geom_point(aes(colour = P_fem_HD, fill = P_fem_HD, 
+                 size = CI_width_HD), alpha = 0.8) +
   geom_point(data = subset(dat, high_cert_HD == "cert"),
              aes(x = Length, y = R.HD, 
-                 shape = factor(pd_detected)),
-             color = "black", stroke = 1, size = 2, fill = NA, inherit.aes = FALSE) +
-  #geom_text_repel(aes(label = label_show), 
-  #                box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
-  scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  #scale_size(limits = c(size_min, size_max)) +
-  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22)) +
-  theme_classic() +
+                 size = CI_width_HD),
+             color = "black", stroke = 1,fill = NA, shape = 21, inherit.aes = FALSE) +
+  scale_size(
+    name = "95% CI width",
+    trans = scales::trans_new(
+      "inv_square",
+      transform = function(x) (1 - x)^2,
+      inverse   = function(x) 1 - sqrt(x)
+    ),
+    breaks = c(0.05, 0.5, 0.95),
+    range = c(1.5, 5)
+  )+
+  scale_color_gradientn(
+    colors = c("darkorange", "darkcyan"),
+    name = "P(f)"
+  ) +
+  scale_fill_gradientn(
+    colors = c("darkorange", "darkcyan"),
+    name = "P(f)"
+  )+  theme_classic() +
   geom_text(data = whaling_lables_hf, aes(x = Length + 0.1, label = label),
             hjust = 0, y = 0.71, size = 2.5, inherit.aes = FALSE) +
-  labs(title = "b)",
+  labs(title = "a)",
        x = "Length (m)",
-       y = expression(NR[flipper]),      
+       y = expression(NR[dorsal]),      
        fill = "P(f)",
        size = "95% CI width",
-       shape = "PD observed")+theme(legend.position = "none")
+       shape = "PD observed")+
+  theme(legend.position = "none")
 
 
 p2 <- ggplot(dat, aes(x = Length, y = R.HF)) +
   geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed") + 
-  geom_point(aes(colour = P_fem_HF, fill = P_fem_HF ,
-                 shape = factor(pd_detected)), size = 2, alpha = 0.9) +
-  # Black outline only for "cert" points
+  geom_point(aes(colour = P_fem_HF, fill = P_fem_HF,
+                 size = CI_width_HF), alpha = 0.8) +
   geom_point(data = subset(dat, high_cert_HF == "cert"),
              aes(x = Length, y = R.HF, 
-                 shape = factor(pd_detected)),
-             color = "black", stroke = 1, size = 2, fill = NA, inherit.aes = FALSE) +
-  # geom_text_repel(aes(label = label_show), 
-  #                box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
-  scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  #scale_size(limits = c(size_min, size_max)) +
-  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22)) +
+                 size = CI_width_HF),
+             color = "black", stroke = 1,fill = NA, shape = 21, inherit.aes = FALSE) +
+  scale_size(
+    name = "95% CI width",
+    trans = scales::trans_new(
+      "inv_square",
+      transform = function(x) (1 - x)^2,
+      inverse   = function(x) 1 - sqrt(x)
+    ),
+    breaks = c(0.05, 0.5, 0.95),
+    range = c(1.5, 5)
+  )+
+  scale_color_gradientn(
+    colors = c("darkorange", "darkcyan"),
+    name = "P(f)"
+  ) +
+  scale_fill_gradientn(
+    colors = c("darkorange", "darkcyan"),
+    name = "P(f)"
+  )+
   theme_classic() +
   geom_text(data = whaling_lables_hf, aes(x = Length + 0.1, label = label),
             hjust = 0, y = 0.412, size = 2.5, inherit.aes = FALSE) +
@@ -454,14 +477,15 @@ p2 <- ggplot(dat, aes(x = Length, y = R.HF)) +
        y = expression(NR[flipper]),      
        fill = "P(f)",
        size = "95% CI width",
-       shape = "PD observed")+guides(colour = "none")
+       shape = "PD observed")+
+       guides(colour = "none")
 
 
 comb <- p1 + p2
 comb 
 
 ggsave("Figures/bootstrap_post_prob_models.png",
-       comb, width = 9, height = 4)
+       comb, width = 12, height = 4)
 
 
 ggsave("Figures/bootstrap_post_prob_models_HF.png",
@@ -627,20 +651,21 @@ mean_lines_hf <- rbind(mean_f_line_hf, mean_m_line_hf)
 p3<-ggplot(all_lines_hd, aes(x = Length, y = Ratio, 
                              group = interaction(Bootstrap, Sex),
                              colour = Sex))+
-  #geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
-  geom_vline(xintercept = 6, alpha = 0.3)+  geom_line(alpha = 0.05, linewidth = 0.5)+
-  geom_line(data = mean_f_line_hd, aes(x = Length, y = Ratio, colour = Sex), 
+  geom_vline(xintercept = 6, alpha = 0.3)+
+  geom_line(alpha = 0.05, linewidth = 0.5)+
+  geom_line(data = mean_f_line_hd, 
+            aes(x = Length, y = Ratio, colour = Sex), 
             linewidth = 1, alpha = 1) +  # mean lines
-  geom_line(data = mean_m_line_hd, aes(x = Length, y = Ratio, colour = Sex), 
+  geom_line(data = mean_m_line_hd, 
+            aes(x = Length, y = Ratio, colour = Sex), 
             linewidth =1, alpha = 1, linetype = "dashed") +  # mean lines
-  scale_color_manual(values = c("F" = "#123c2e", "M" = "#eba8ad", 
-                                "Fem" = "#b8c5c0", "Mal" = "#f9e5e6"))+
+  scale_color_manual(values = c("F" = "darkcyan", "M" = "darkorange", 
+                                "Fem" = "#b3dcdc", "Mal" = "#ffddb3"))+
   scale_y_continuous(limits = c(0.56, 0.74))+
-  #geom_text(data = whaling_lables_hd, aes(x = Length+0.1,label = label),
-  #          y =0.745,
-  #          hjust = 0, size = 2.5, inherit.aes = F)+
   theme_classic()+
-  labs(x = "Length (m)", y = expression(NR[dorsal]), title = "a)")+
+  labs(x = "Length (m)", 
+       y = expression(NR[dorsal]), 
+       title = "a)")+
   theme(legend.position = "null")
 p3
 #HF
@@ -648,22 +673,21 @@ p3
 p4<-ggplot(all_lines_hf, aes(x = Length, y = Ratio, 
                              group = interaction(Bootstrap, Sex),
                              colour = Sex))+
-  #geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
   geom_vline(xintercept = 6, alpha = 0.3)+
   geom_line(alpha = 0.05, linewidth = 0.5)+
-  geom_line(data = mean_f_line_hf, aes(x = Length, y = Ratio, colour = Sex), 
+  geom_line(data = mean_f_line_hf, 
+            aes(x = Length, y = Ratio, colour = Sex), 
             linewidth = 1, alpha = 1) +  # mean lines
-  geom_line(data = mean_m_line_hf, aes(x = Length, y = Ratio, colour = Sex), 
+  geom_line(data = mean_m_line_hf, 
+            aes(x = Length, y = Ratio, colour = Sex), 
             linewidth =1, alpha = 1 ,linetype = "dashed") +  # mean lines
-  
-  scale_color_manual(values = c("F" = "#123c2e", "M" = "#eba8ad", 
-                                "Fem" = "#b8c5c0", "Mal" = "#f9e5e6"))+
+  scale_color_manual(values = c("F" = "darkcyan", "M" = "darkorange", 
+                                "Fem" = "#b3dcdc", "Mal" = "#ffddb3"))+  
   scale_y_continuous(limits = c(0.24, 0.42))+
-  #geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
-  #          y = 0.425,
-  #          hjust = 0, size = 2.5, inherit.aes = F)+
   theme_classic()+
-  labs(x = "Length (m)", y = expression(NR[flipper]), title = "b)")+
+  labs(x = "Length (m)", 
+       y = expression(NR[flipper]), 
+       title = "b)")+
   guides(colour = "none")
 
 
@@ -705,26 +729,70 @@ curve_df_HF <- tibble(
 
 #~~~~b. plot-----
 
-p5  <-ggplot(dat, aes(x = Length, y = R.HD))+
-  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+  # Vertical lines
-  geom_line(data = curve_df_HD %>% filter(Length < 12 & Curve == "Female"), aes(x = Length, y = R.HD), 
-            linewidth = 1, alpha = 1, colour = "#123c2e") +  # female curve - simple 
-  geom_line(data = curve_df_HD %>% filter(Length >=6 & Curve == "Male"), aes(x = Length, y = R.HD), 
-            linewidth =1, alpha = 1, linetype = "dashed", colour = "#eba8ad") +  # mean lines
-  geom_point(aes(colour = P_fem_HD, fill = P_fem_HD,
-                 shape = factor(pd_detected)), size = 2, alpha = 0.8) +
-  #geom_text_repel(aes(label = label_show), 
-  #               box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
+p5  <- ggplot(dat, 
+              aes(x = Length, 
+                  y = R.HD))+
+  
+  #vertical whaling data lines
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), 
+             alpha = 0.3, 
+             linetype = "dashed")+
+  
+  #individual points
+  geom_point(aes(colour = P_fem_HD, # individual points
+                 fill = P_fem_HD,
+                 size = CI_width_HD), 
+             alpha = 0.8) +
+  
   # Black outline only for "cert" points
   geom_point(data = subset(dat, high_cert_HD == "cert"),
-             aes(x = Length, y = R.HD, 
-                 shape = factor(pd_detected), fill = NULL),
-             color = "black", stroke = 1, size = 2,  inherit.aes = FALSE) +
+             aes(x = Length, 
+                 y = R.HD, 
+                 size = CI_width_HD, 
+                 fill = NULL),
+             color = "black",
+             stroke = 1, 
+             shape = 21,  
+             inherit.aes = FALSE) +
   
-  scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  #scale_size(limits = c(size_min, size_max))+
-  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
+  #mean lines:
+  geom_line(data = curve_df_HD %>% filter(Length < 12 & Curve == "Female"), 
+            aes(x = Length, 
+                y = R.HD), 
+            linewidth = 1, 
+            alpha = 1, 
+            colour = "darkcyan") +  # female curve - simple 
+  geom_line(data = curve_df_HD %>% filter(Length >=6 & Curve == "Male"), 
+            aes(x = Length, 
+                y = R.HD), 
+            linewidth =1, 
+            alpha = 1, 
+            linetype = "dashed", 
+            colour = "darkorange") + 
+  
+  #define colours
+  scale_color_gradientn(
+    colors = c("darkorange", "darkcyan"),
+    name = "P(f)"
+  ) +
+  scale_fill_gradientn(
+    colors = c("darkorange", "darkcyan"),
+    name = "P(f)"
+  )+ 
+  
+  #define size scale
+  scale_size(
+    name = "95% CI width",
+    trans = scales::trans_new(
+      "inv_square",
+      transform = function(x) (1 - x)^2,
+      inverse   = function(x) 1 - sqrt(x)
+    ),
+    breaks = c(0.05, 0.5, 0.95),
+    range = c(1.5, 5)
+  )+
+  
+  #neat lables
   theme_classic()+
   geom_text(data = whaling_lables_hd, aes(x = Length+0.1, label = label),
             y = 0.71,
@@ -739,44 +807,90 @@ p5  <-ggplot(dat, aes(x = Length, y = R.HD))+
 
 
 
-p6<-ggplot(dat, aes(x = Length, y = R.HF))+
-  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+ 
-  geom_line(data = curve_df_HF %>% filter(Length < 12 & Curve == "Female"),
-            aes(x = Length, y = R.HF), 
-            linewidth = 1, alpha = 1, colour = "#123c2e") +  # mean lines
-  geom_line(data = curve_df_HF %>% filter(Length >= 6 & Curve == "Male"), 
-            aes(x = Length, y = R.HF), 
-            linewidth =1, alpha = 1, linetype = "dashed", colour = "#eba8ad") +  # mean lines
+p6  <- ggplot(dat, 
+              aes(x = Length, 
+                  y = R.HF))+
   
-  geom_point(aes(colour = P_fem_HF, fill = P_fem_HF,
-                 shape = factor(pd_detected)), size = 2, alpha = 0.8) +
-  # geom_text_repel(aes(label = label_show), 
-  #                box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
+  #vertical whaling data lines
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), 
+             alpha = 0.3, 
+             linetype = "dashed")+
+  
+  #individual points
+  geom_point(aes(colour = P_fem_HF, # individual points
+                 fill = P_fem_HF,
+                 size = CI_width_HF), 
+             alpha = 0.8) +
+  
   # Black outline only for "cert" points
   geom_point(data = subset(dat, high_cert_HF == "cert"),
-             aes(x = Length, y = R.HF, 
-                 shape = factor(pd_detected), fill = NULL),
-             color = "black", stroke = 1, size = 2,  inherit.aes = FALSE) +
-  scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
+             aes(x = Length, 
+                 y = R.HF, 
+                 size = CI_width_HF, 
+                 fill = NULL),
+             color = "black",
+             stroke = 1, 
+             shape = 21,  
+             inherit.aes = FALSE) +
+  
+  #mean lines:
+  geom_line(data = curve_df_HF %>% 
+              filter(Length < 12 & Curve == "Female"), 
+            aes(x = Length, 
+                y = R.HF), 
+            linewidth = 1, 
+            alpha = 1, 
+            colour = "darkcyan") +  # female curve - simple 
+  geom_line(data = curve_df_HF %>% filter(Length >=6 & Curve == "Male"), 
+            aes(x = Length, 
+                y = R.HF), 
+            linewidth =1, 
+            alpha = 1, 
+            linetype = "dashed", 
+            colour = "darkorange") + 
+  
+  #define colours
+  scale_color_gradientn(
+    colors = c("darkorange", "darkcyan"),
+    name = "P(f)"
+  ) +
+  scale_fill_gradientn(
+    colors = c("darkorange", "darkcyan"),
+    name = "P(f)"
+  )+ 
+  
+  #define size scale
+  scale_size(
+    name = "95% CI width",
+    trans = scales::trans_new(
+      "inv_square",
+      transform = function(x) (1 - x)^2,
+      inverse   = function(x) 1 - sqrt(x)
+    ),
+    breaks = c(0.05, 0.5, 0.95),
+    range = c(1.5, 5)
+  )+
+  
+  #neat lables
   theme_classic()+
-  geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
-            y = 0.413,
-            hjust = 0, size =2.5, inherit.aes = F)+
+  geom_text(data = whaling_lables_hd, 
+            aes(x = Length+0.1, 
+                label = label),
+            y = 0.71,
+            hjust = 0, 
+            size = 2.5, 
+            inherit.aes = F)+
   labs(title = "b)",
        x = "Length (m)",
        y = expression(NR[flipper]),      
        fill = "P(f)",
-       size = "95% CI width",
-       shape = "PD observed")+ guides(colour = "none")
-
+       size = "95%CI width")
 
 comb2 <- p5 + p6
 comb2 
 
 ggsave("Figures/Final_Figures/Sup_FigS3_4_bootstrap_post_prob_models_simple_curves.png",
-       comb2, width = 9, height = 4)
+       comb2, width = 11, height = 4)
 
 
 ggsave("Figures/bootstrap_post_prob_models_mean_curves_HD.png",
@@ -796,31 +910,80 @@ morpho.males<- morpho.males %>%
   mutate(R.HF = Ratio)
 
 
-p7<-ggplot(dat, aes(x = Length, y = R.HF))+
-  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), alpha = 0.3, linetype = "dashed")+ 
-  geom_line(data = curve_df_HF %>% filter(Length < 12 & Curve == "Female"),
-            aes(x = Length, y = R.HF), 
-            linewidth = 1, alpha = 1, colour = "#123c2e") +  # mean lines
-  geom_line(data = curve_df_HF %>% filter(Length >= 6 & Curve == "Male"), 
-            aes(x = Length, y = R.HF), 
-            linewidth =1, alpha = 1, linetype = "dashed", colour = "#eba8ad") +  # mean lines
+p7<-ggplot(dat, 
+           aes(x = Length, 
+               y = R.HF))+
   
-  geom_point(aes(colour = P_fem_HF, fill = P_fem_HF,
-                 shape = factor(pd_detected)), size = 2, alpha = 0.8) +
-  # geom_text_repel(aes(label = label_show), 
-  #                box.padding = 1, alpha = .8, max.overlaps = Inf, size = 3) +
+  #whaling lines
+  geom_vline(xintercept = c(4, 5.5, 7.5, 8.5, 10, 12, 13.7), 
+             alpha = 0.3, linetype = "dashed")+ 
+  
+  #mean lines
+  geom_line(data = curve_df_HF %>% 
+              filter(Length < 12 & Curve == "Female"),
+            aes(x = Length,
+                y = R.HF), 
+            linewidth = 1, 
+            alpha = 1, 
+            colour = "darkcyan") +  
+  
+  geom_line(data = curve_df_HF %>% 
+              filter(Length >= 6 & Curve == "Male"), 
+            aes(x = Length, 
+                y = R.HF), 
+            linewidth =1, 
+            alpha = 1, 
+            linetype = "dashed", 
+            colour = "darkorange") +
+  
+  #individual points
+  geom_point(aes(colour = P_fem_HF, 
+                 fill = P_fem_HF,
+                 size = CI_width_HF),
+             alpha = 0.8) +
+
   # Black outline only for "cert" points
   geom_point(data = subset(dat, high_cert_HF == "cert"),
-             aes(x = Length, y = R.HF, 
-                 shape = factor(pd_detected), fill = NULL),
-             color = "black", stroke = 1, size = 2,  inherit.aes = FALSE) +
-  scale_fill_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  scale_color_wa_c("puget", limits = c(color_min, color_max), reverse = T) +
-  scale_shape_manual(values = c("no" = 21, "receiving" = 24, "doing" = 22))+
+             aes(x = Length, 
+                 y = R.HF, 
+                 size = CI_width_HF, 
+                 fill = NULL),
+             color = "black", 
+             stroke = 1, 
+             shape = 21,
+             inherit.aes = FALSE) +
+  
+  #define colours
+  scale_color_gradientn(
+    colors = c("darkorange", "darkcyan"),
+    name = "P(f)"
+  ) +
+  scale_fill_gradientn(
+    colors = c("darkorange", "darkcyan"),
+    name = "P(f)"
+  )+ 
+  
+  #define size scale
+  scale_size(
+    name = "95% CI width",
+    trans = scales::trans_new(
+      "inv_square",
+      transform = function(x) (1 - x)^2,
+      inverse   = function(x) 1 - sqrt(x)
+    ),
+    breaks = c(0.05, 0.5, 0.95),
+    range = c(1.5, 5)
+  )+
+  
+  #add males
   geom_point(data = morpho.males, 
-             aes(x = Length, y = R.HF, colour = P_fem, fill = P_fem),
-             size = 2, 
+             aes(x = Length, 
+                 y = R.HF, 
+                 colour = P_fem, fill = P_fem),
+             size = 4, 
              shape = 23)+
+  
+  #neat lables
   theme_classic()+
   geom_text(data = whaling_lables_hf, aes(x = Length+0.1, label = label),
             y = 0.413,
@@ -830,9 +993,10 @@ p7<-ggplot(dat, aes(x = Length, y = R.HF))+
        y = expression(NR[flipper]),      
        fill = "P(f)",
        size = "95% CI width",
-       shape = "PD observed")+ guides(colour = "none")
+       shape = "PD observed")+
+  guides(colour = "none")
 
-
+p7
 
 
 ggsave("Figures/Final_Figures/Fig6_post_prob_models_simple_curves_HF.png",
