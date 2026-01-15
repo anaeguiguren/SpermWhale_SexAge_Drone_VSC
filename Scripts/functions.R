@@ -142,7 +142,7 @@ measureWhales<- function(image.width, altitude, length.pixels){
 
 #female curve:
 #fem_curve <- function(length, fr, fmax) {
- # fmax * exp(fr * length) / (1 + exp(fr * length))
+#  fmax * exp(fr * length) / (1 + exp(fr * length))
 #}
 
 #female curve: equivalent but numerically stable:
@@ -158,6 +158,14 @@ min_slope <- function(chm = 6, fr, fmax) {
   y_max <- fem_curve(length = 18, fr = fr, fmax = fmax)
   
   2 * (y_max - y_chm) / (18 - chm)
+}
+
+
+# alternatively get the slope from L = chm (derivative)
+deriv_fem <- function(fmax, fr, length){
+  num = fmax * fr * exp(fr*length)
+  den = (1 + exp(fr * length))^2
+  num/den
 }
 
 
@@ -231,36 +239,16 @@ sumsq <- function(params, data, chm, exponential_male_growth = TRUE, weighted = 
 
 
 
-#~~~c. Find parameters using optim ----
+#~~~c. Find parameters using optim (original logistic version) ----
 optim_sex <- function(data, chm, exponential_male_growth = TRUE, pard0, weighted = FALSE){
   
-  mr_l_max <- 0.2   # max biologically plausible slope (nish*3)
-
   
   objfun <- function(p) {
     
     if(exponential_male_growth){
-      if(p["mmax"] < 0 ) return(1e12)  # penalty if fmax >= mmax
+      if(p["mmax"] < 0 | p["mr"] < 0) return(1e12)  # penalizes mmax and mr being <0
     }
 
-    if (!exponential_male_growth) {
-      
-      #bound within reason to stop optimizer from dropping male curve and ensure
-      #mr_l is higher than min_slope based on female parameters
-      min_sl <- unname(min_slope(chm = chm, fr = p['fr'], fmax = p['fmax']))
-      
-      if (is.na(p["mr_l"]) || is.na(min_sl)) {
-        print("NA detected")
-        print(p)
-        print(min_sl)
-        return(1e12)
-      }
-      
-      
-      if (p["mr_l"] < min_sl || p["mr_l"] > mr_l_max)
-        return(1e12)
-      
-    }
     
     val <- tryCatch({
       if(weighted) {
@@ -295,7 +283,79 @@ optim_sex <- function(data, chm, exponential_male_growth = TRUE, pard0, weighted
 }
 
 
+#~~~c. Find parameters using optim (bounding box)----
+optim_sex_lin <- function(data, chm, exponential_male_growth = FALSE,
+                        pard0, weighted = FALSE){
+  
+  
+  #objfuncition
+  objfun <- function(p) {
+      
+      fr   <- p["fr"]
+      fmax <- p["fmax"]
+      mr_l <- p["mr_l"]
+      
+      # enforce biologically meaningful slope
+      # max sl < 0.02 (nish slope * 3 to be very generous)
+      
+      max_sl <- 0.02
+      
+      #min_sl <- unname(min_slope(chm = chm, fr = fr, fmax = fmax))
+      #min_sl <-  0.001
+      
+      
+      min_sl<- deriv_fem(fmax = fmax,
+                         fr = fr,
+                         length = 6)
+      
+      if(is.nan(min_sl)) return(1e12) #penalize wild numbers
+      
+      if (mr_l < min_sl || mr_l > max_sl) return(1e12)
+      
+      params <- c(
+        fr   = unname(fr),
+        fmax = unname(fmax),
+        mr_l = unname(mr_l)
+      )
+  
+  #what we're trying to optimize 
+  val <- tryCatch({
+    if(weighted) {
+      sumsq(params = p, 
+            data = data , 
+            exponential_male_growth = exponential_male_growth, 
+            chm = chm, 
+            weighted = TRUE)
+    } else {
+      sumsq(params = p, 
+            data = data, 
+            exponential_male_growth = exponential_male_growth,
+            chm = chm, 
+            weighted = FALSE)$ss
+    }
+  }, error = function(e) 1e12)
+  
+  if (!is.finite(val)) val <- 1e12
+  return(val)
+  }
 
+    
+  #run the optimizier
+  
+
+  fit <- optim(par = pard0, 
+             objfun, 
+             control= list(maxit = 205000),
+             method = "BFGS")
+
+ #return
+
+  list(
+    params = fit$par,
+    ss = fit$value,
+    fit = fit
+  )
+}
 
 #~~~d. Estimate posterior probability of being female ----
 

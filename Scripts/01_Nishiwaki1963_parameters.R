@@ -78,7 +78,7 @@ fit_male_piecewise_linear <- function(data, early_params, chm = 6) {
   late_model <- nls(Ratio ~ base +
                       mr_l * (Length - chm),
                     data = late_data,
-                    start = list(mr_l = 0.5),
+                    start = list(mr_l = 0.05),
                     control = nls.control(maxiter = 2000))
   
   return(list(early_params = early_params,
@@ -210,4 +210,11 @@ params <- data.frame(
   Value = c(max_ratio_F, max_ratio_M, growth_rate_F, growth_rate_M, growth_rate_M_linear)
 )
 
+
+
+
+params <- data.frame(
+  Parameter = c("fr", "fmax", "mr", "mmax", "mr_l"),
+  Value = c(growth_rate_F, max_ratio_F, growth_rate_M, max_ratio_M, growth_rate_M_linear)
+)
 write.csv(params, "Data/Processed_Data/nishiwaki_parameters.csv", row.names = FALSE)

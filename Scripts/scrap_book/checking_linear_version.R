@@ -33,7 +33,7 @@ tmp.dat <- dat_HF %>%
 
 #2. find optimal curve -----
 #exponential (HD)
-hd.temp <- optim_sex(data = tmp.dat %>% mutate(Ratio = R.HD),
+hd.temp <- optim_sex_b(data = tmp.dat %>% mutate(Ratio = R.HD),
                      chm = 6, 
                      pard0 = c(fmax = nish$Value[1], 
                                fr = nish$Value[3], 
@@ -47,7 +47,7 @@ hd.temp$ss
 
 
 
-hd.temp.lin <- optim_sex(data = tmp.dat %>% mutate(Ratio = R.HD),
+hd.temp.lin <- optim_sex_b(data = tmp.dat %>% mutate(Ratio = R.HD),
                          chm = 6, 
                          pard0 = c(fmax = nish$Value[1], 
                                    fr = nish$Value[3], 
@@ -96,6 +96,9 @@ deriv_fem <- function(fmax, fr, length){
 slope <- deriv_fem(fmax = unname(hd.temp.lin$params['fmax']),
            fr = unname(hd.temp.lin$params['fr']),
           length = 6)
+
+
+deriv_fem(fr = 213, fmax = 1766, length = 6)
 
 y0 <- fem_curve(length = 6, 
                 fr = unname(hd.temp.lin$params["fr"]), 

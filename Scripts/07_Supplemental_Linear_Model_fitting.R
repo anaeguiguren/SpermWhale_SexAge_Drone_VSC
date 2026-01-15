@@ -5,6 +5,7 @@
 rm(list = ls())
 
 source("Scripts/functions.R")
+library(progress) # to show progress in loop across bootstraps
 
 set.seed(1234567)
 
@@ -57,8 +58,14 @@ dat_boot <- vector("list", n_boots)
 dat_boot_lin <- vector("list", n_boots) 
 
 
+pb <- progress_bar$new(
+  total = n_boots,
+  clear = FALSE,
+  width = 60
+)
 
 for(i in 1:n_boots){
+  
   
   # each time
   
@@ -68,19 +75,19 @@ for(i in 1:n_boots){
   
   #HD models
   
-  hd.temp <- optim_sex(data = tmp.dat %>% mutate(Ratio = R.HD),
+    hd.temp <- optim_sex(data = tmp.dat %>% mutate(Ratio = R.HD),
                        chm = 6, 
-                       pard0 = c(fmax = nish$Value[1], 
-                                 fr = nish$Value[3], 
-                                 mmax = nish$Value[2], 
-                                 mr = nish$Value[4]), 
+                       pard0 = c(fr = nish$Value[1], 
+                                 fmax = nish$Value[2] , 
+                                 mr = nish$Value[3], 
+                                 mmax = nish$Value[4]), 
                        exponential_male_growth = TRUE,
                        weighted = FALSE)
   
-  hd.temp.lin <- optim_sex(data = tmp.dat %>% mutate(Ratio = R.HD),
+  hd.temp.lin <- optim_sex_lin(data = tmp.dat %>% mutate(Ratio = R.HD),
                            chm = 6, 
-                           pard0 = c(fmax = nish$Value[1], 
-                                     fr = nish$Value[3], 
+                           pard0 = c(fr = nish$Value[1], 
+                                     fmax = nish$Value[2], 
                                      mr_l = nish$Value[5]), 
                            exponential_male_growth = FALSE,
                            weighted = FALSE)
@@ -89,18 +96,18 @@ for(i in 1:n_boots){
   #HF models
   hf.temp <- optim_sex(tmp.dat %>% mutate(Ratio = R.HF),
                        chm = 6, 
-                       pard0 =  c(fmax = nish$Value[1], 
-                                  fr = nish$Value[3], 
-                                  mmax = nish$Value[2], 
-                                  mr = nish$Value[4]), 
+                       pard0 = c(fr = nish$Value[1], 
+                                 fmax = nish$Value[2] , 
+                                 mr = nish$Value[3], 
+                                 mmax = nish$Value[4]), 
                        exponential_male_growth = TRUE,
                        weighted = FALSE)
   
-  hf.temp.lin <- optim_sex(tmp.dat %>% mutate(Ratio = R.HF),
+  hf.temp.lin <- optim_sex_lin(tmp.dat %>% mutate(Ratio = R.HF),
                            chm = 6, 
-                           pard0 =  c(fmax = nish$Value[1], 
-                                      fr = nish$Value[3], 
-                                      mr_l = nish$Value[5]), 
+                           pard0 = c(fr = nish$Value[1], 
+                                     fmax = nish$Value[2], 
+                                     mr_l = nish$Value[5]), 
                            exponential_male_growth = FALSE,
                            weighted = FALSE)
   
@@ -179,6 +186,8 @@ for(i in 1:n_boots){
   
   ss_hd_lin[[i]] <-hd.temp.lin$ss
   ss_hf_lin[[i]] <-hf.temp.lin$ss
+  
+  pb$tick()
   
   
 }
@@ -264,14 +273,12 @@ boot_summary<-all_boot %>%
 hd_params_df <- do.call(rbind, boot_params_hd)
 hd_params_df <- as.data.frame(hd_params_df)
 
-names(hd_params_df) <- c("fr", "fmax", "mr", "mmax")
 summary(hd_params_df)
 
 
 hf_params_df <- do.call(rbind, boot_params_hf)
 hf_params_df <- as.data.frame(hf_params_df)
 
-names(hf_params_df) <- c("fr", "fmax", "mr", "mmax")
 summary(hf_params_df)
 
 #~~~~~linear
@@ -335,4 +342,7 @@ boot_summary$CV_HF <- (boot_summary$sd_R.HF/boot_summary$mean_R.HF)*100
 
 save.image(file = "bootstrapped_estimates_linear_version.RData")
 #load("bootstrapped_estimates.RData")
+
+
+
 
