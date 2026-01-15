@@ -40,13 +40,13 @@ hf_params
 #3. Estimate probatilities -----
 #based on combined dataset
 
-dat.m$P_fem <- f_probs(params = hf_params, data = dat.m)
+dat.m$P_fem <- f_probs(params = hf_params, data = dat.m, exponential_male_growth = T)
 
 mad<-mad %>%
   mutate(Ratio = R.HF.m, 
          
          Length = TL.m, ID = VideoFile)
-f_probs(params = hf_params, data = mad)#also super low
+f_probs(params = hf_params, data = mad, exponential_male_growth = T)#also super low
 #4. save dataset -----
 
 write.csv(dat.m, "Data/Processed_Data/output_p_fem_full_and_males.csv")
