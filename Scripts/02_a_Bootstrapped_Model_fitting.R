@@ -4,6 +4,7 @@
 rm(list = ls())
 
 source("Scripts/functions.R")
+library(progress)
 
 set.seed(1234567)
 
@@ -56,6 +57,13 @@ ss_hf <- vector("list", n_boots)
 #individual estimates of p_fem
 dat_boot <- vector("list", n_boots)
 
+#setup progress bar:
+pb <- progress_bar$new(
+  total = n_boots,
+  clear = FALSE,
+  width = 60
+)
+
 
 
 for(i in 1:n_boots){
@@ -68,20 +76,20 @@ for(i in 1:n_boots){
   
   hd.temp <- optim_sex(data = tmp.dat %>% mutate(Ratio = R.HD),
                       chm = 6, 
-                      pard0 = c(fmax = nish$Value[1], 
-                                fr = nish$Value[3], 
-                                mmax = nish$Value[2], 
-                                mr = nish$Value[4]), 
+                      pard0 = c(fr = nish$Value[1], 
+                                fmax = nish$Value[2] , 
+                                mr = nish$Value[3], 
+                                mmax = nish$Value[4]), 
                       exponential_male_growth = TRUE,
                       weighted = FALSE)
   
   
   hf.temp <- optim_sex(tmp.dat %>% mutate(Ratio = R.HF),
                        chm = 6, 
-                       pard0 =  c(fmax = nish$Value[1], 
-                                  fr = nish$Value[3], 
-                                  mmax = nish$Value[2], 
-                                  mr = nish$Value[4]), 
+                       pard0 = c(fr = nish$Value[1], 
+                                 fmax = nish$Value[2] , 
+                                 mr = nish$Value[3], 
+                                 mmax = nish$Value[4]), 
                        exponential_male_growth = TRUE,
                        weighted = FALSE)
   
@@ -126,6 +134,7 @@ for(i in 1:n_boots){
   
   dat_boot[[i]] <- tmp.dat
   
+  pb$tick()
   
 }
 

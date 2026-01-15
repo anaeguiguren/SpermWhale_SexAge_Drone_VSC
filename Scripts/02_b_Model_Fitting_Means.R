@@ -36,26 +36,38 @@ dat_HF <- dat # already subset for no na's!
 
 #growth curves
 hd_mod <-optim_sex(data = dat_HF %>% mutate(Ratio = R.HD), 
-                   pard0 = c(fr = nish[3,2], fmax = nish[1,2], mr = nish[4,2], mmax = nish[2,2]), 
+                   pard0 = c(fr = nish$Value[1], 
+                             fmax = nish$Value[2] , 
+                             mr = nish$Value[3], 
+                             mmax = nish$Value[4]), 
+                   exponential_male_growth = T,
                    chm = 6)
 
 hd_params <- hd_mod$fit$par
 
 
 #posterior probabilities
-dat_HF$P_fem_HD <- f_probs(params = hd_params, data = dat_HF%>% mutate(Ratio = R.HD))
+dat_HF$P_fem_HD <- f_probs(params = hd_params,
+                           exponential_male_growth = T,
+                           data = dat_HF%>% mutate(Ratio = R.HD))
 
 
 # 4. HF model ----
 
 #growth curves
 hf_mod <-optim_sex(data = dat_HF %>% mutate(Ratio = R.HF), 
-                   pard0 = c(fr = nish[3,2], fmax = nish[1,2], mr = nish[4,2], mmax = nish[2,2]), 
+                   pard0 = c(fr = nish$Value[1], 
+                             fmax = nish$Value[2] , 
+                             mr = nish$Value[3], 
+                             mmax = nish$Value[4]), 
+                   exponential_male_growth = T,
                    chm = 6)
 
 hf_params <- hf_mod$params
 #posterior probabilities
-dat_HF$P_fem_HF<-f_probs(params = hf_params, data = dat_HF %>% mutate(Ratio = R.HF))
+dat_HF$P_fem_HF<-f_probs(params = hf_params, 
+                         data = dat_HF %>% mutate(Ratio = R.HF), 
+                         exponential_male_growth = T)
 
 # 5. Visualize ------
 
